@@ -1,7 +1,8 @@
-import mongoose, { Schema, Document, Model } from "mongoose";
+import mongoose, { Schema, Model, HydratedDocument, Types } from "mongoose";
 import bcrypt from "bcrypt";
 
-// Enums
+// ── Enums ─────────────────────────────────────────────
+
 export enum AuthProvider {
   LOCAL = "local",
   GOOGLE = "google",
@@ -12,11 +13,8 @@ export enum UserRole {
   ADMIN = "admin",
 }
 
-// Interfaces
+// ── Interfaces ────────────────────────────────────────
 
-/**
- * Represents a single device/session's refresh token entry.
- */
 export interface IRefreshToken {
   token: string;
   createdAt: Date;
@@ -24,47 +22,52 @@ export interface IRefreshToken {
 }
 
 /**
- * Core user shape — used everywhere in the app.
+ * Core user shape (NO Document extension)
  */
-export interface IUser extends Document {
-  _id: mongoose.Types.ObjectId;
+export interface IUser {
+  _id: Types.ObjectId;
   name: string;
   email: string;
-  password?: string; // Optional — not present for OAuth users
+  password?: string;
   avatar?: string;
   bio?: string;
   role: UserRole;
   authProvider: AuthProvider;
   googleId?: string;
 
-  // ── Presence ──────────────────────────────
+  // Presence
   isOnline: boolean;
   lastSeen: Date;
 
-  // ── Account State ──────────────────────────
+  // Account State
   isVerified: boolean;
   isBlocked: boolean;
 
-  // ── Tokens ────────────────────────────────
+  // Tokens
   refreshTokens: IRefreshToken[];
 
-  // ── Timestamps (auto by Mongoose) ─────────
+  // Timestamps
   createdAt: Date;
   updatedAt: Date;
 
-  // ── Instance Methods ───────────────────────
+  // Instance methods
   comparePassword(candidatePassword: string): Promise<boolean>;
-  toSafeObject(): Omit<IUser, "password" | "refreshTokens">;
+  toSafeObject(): Omit<IUser, "password" | "refreshTokens" | "googleId">;
 }
 
 /**
- * Static methods on the User Model.
+ * Hydrated document type (modern way)
+ */
+export type UserDocument = HydratedDocument<IUser>;
+
+/**
+ * Static methods
  */
 export interface IUserModel extends Model<IUser> {
-  findByEmail(email: string): Promise<IUser | null>;
+  findByEmail(email: string): Promise<UserDocument | null>;
 }
 
-// Sub-schemas
+// ── Sub-schema ────────────────────────────────────────
 
 const refreshTokenSchema = new Schema<IRefreshToken>(
   {
@@ -81,10 +84,11 @@ const refreshTokenSchema = new Schema<IRefreshToken>(
       required: true,
     },
   },
-  { _id: false }, // No need for a separate _id on sub-documents
+  { _id: false },
 );
 
-// Main user schema
+// ── Main Schema ───────────────────────────────────────
+
 const userSchema = new Schema<IUser, IUserModel>(
   {
     name: {
@@ -107,7 +111,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     password: {
       type: String,
       minlength: [8, "Password must be at least 8 characters"],
-      select: false, // Never returned in queries by default
+      select: false,
     },
 
     avatar: {
@@ -136,7 +140,7 @@ const userSchema = new Schema<IUser, IUserModel>(
     googleId: {
       type: String,
       default: null,
-      sparse: true, // Allows multiple null values in unique index
+      sparse: true,
     },
 
     // Presence
@@ -165,68 +169,56 @@ const userSchema = new Schema<IUser, IUserModel>(
     refreshTokens: {
       type: [refreshTokenSchema],
       default: [],
-      select: false, // Never returned in queries by default
+      select: false,
     },
   },
   {
-    timestamps: true, // Adds createdAt and updatedAt automatically
+    timestamps: true,
     versionKey: false,
   },
 );
 
-// Indexes
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ googleId: 1 }, { sparse: true });
+// ── Indexes ───────────────────────────────────────────
 userSchema.index({ isOnline: 1 });
 userSchema.index({ createdAt: -1 });
 
-// Pre save hook
-userSchema.pre("save", async function (next) {
+// ── Pre-save Hook ─────────────────────────────────────
+
+userSchema.pre("save", async function (this: UserDocument) {
   // Only hash if password field was modified
   if (!this.isModified("password") || !this.password) {
-    return next();
+    return;
   }
 
-  try {
-    const saltRounds = 12;
-    this.password = await bcrypt.hash(this.password, saltRounds);
-    next();
-  } catch (error) {
-    next(error as Error);
-  }
+  const saltRounds = 12;
+  this.password = await bcrypt.hash(this.password, saltRounds);
 });
 
-// Instance methods
+// ── Instance Methods ──────────────────────────────────
 
-/**
- * Compares a plain-text password against the stored hash.
- */
-userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (
+  this: UserDocument,
+  candidatePassword: string,
+): Promise<boolean> {
   if (!this.password) return false;
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-/**
- * Returns a user object safe to send to the client.
- * Strips password, refreshTokens, and other sensitive fields.
- */
-userSchema.methods.toSafeObject = function () {
-  const userObject = this.toObject();
-  delete userObject.password;
-  delete userObject.refreshTokens;
-  delete userObject.googleId;
-  return userObject;
+userSchema.methods.toSafeObject = function (this: UserDocument) {
+  const { ...safeUser } = this.toObject();
+  return safeUser;
 };
 
-// Static methods
+// ── Static Methods ────────────────────────────────────
 
-/**
- * Find a user by email, explicitly selecting the password field.
- * Used during login flow.
- */
-userSchema.statics.findByEmail = function (email: string): Promise<IUser | null> {
+userSchema.statics.findByEmail = function (
+  this: IUserModel,
+  email: string,
+): Promise<UserDocument | null> {
   return this.findOne({ email: email.toLowerCase().trim() }).select("+password +refreshTokens");
 };
+
+// ── Model Export ──────────────────────────────────────
 
 const User = mongoose.model<IUser, IUserModel>("User", userSchema);
 

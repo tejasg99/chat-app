@@ -1,3 +1,4 @@
+import "./types/express";
 import "dotenv/config";
 import http from "http";
 import app from "./app.js";

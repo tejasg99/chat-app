@@ -3,8 +3,12 @@ import type { Application } from "express";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
+import passport from "passport";
 import "dotenv/config";
+
 import { errorHandler, notFoundHandler } from "./middlewares/errorHandler";
+import { configurePassport } from "./config/passport";
 import apiRouter from "./routes/index";
 
 const app: Application = express();
@@ -45,9 +49,14 @@ const globalLimiter = rateLimit({
 
 app.use(globalLimiter);
 
-// Body parsers
+// Body and cookie parsers
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(cookieParser());
+
+// Passport initialization
+configurePassport();
+app.use(passport.initialize());
 
 // API routes
 app.use("/api", apiRouter);

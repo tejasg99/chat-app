@@ -1,6 +1,8 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { sendSuccess } from "@utils/ApiResponse";
+import authRoutes from "./auth.routes";
+import userRoutes from "./user.routes";
 
 const router = Router();
 
@@ -20,5 +22,9 @@ router.get("/health", (_req: Request, res: Response) => {
     200,
   );
 });
+
+// Feature routes
+router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
 
 export default router;
