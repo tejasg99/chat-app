@@ -1,74 +1,32 @@
-import { userRepository } from "./user.repository";
-import type { IUser } from "../models/user.model";
-import { AuthProvider } from "../models/user.model";
+import { User } from "../models/user.model.ts";
+import type { IUser } from "../types/index.ts";
 
-/**
- * Auth-specific DB operations.
- * Delegates to userRepository — keeps auth concerns separate.
- */
-export class AuthRepository {
-  /**
-   * Find user with credentials for login.
-   */
-  async findUserForLogin(email: string): Promise<IUser | null> {
-    return userRepository.findByEmailWithCredentials(email);
-  }
+export const findUserByEmail = async (
+  email: string,
+  includePassword = false,
+): Promise<IUser | null> => {
+  const query = User.findOne({ email });
+  if (includePassword) query.select("+password");
+  return query.lean<IUser>().exec();
+};
 
-  /**
-   * Create a local (email+password) user.
-   */
-  async createLocalUser(data: { name: string; email: string; password: string }): Promise<IUser> {
-    return userRepository.create({
-      ...data,
-      authProvider: AuthProvider.LOCAL,
-      isVerified: false,
-    });
-  }
+export const findUserById = async (id: string): Promise<IUser | null> =>
+  User.findById(id).lean<IUser>().exec();
 
-  /**
-   * Find or create a Google OAuth user.
-   * Returns the user and whether they were just created.
-   */
-  async findOrCreateGoogleUser(profile: {
-    googleId: string;
-    email: string;
-    name: string;
-    avatar?: string;
-  }): Promise<{ user: IUser; isNew: boolean }> {
-    // Check if user already signed up with Google
-    let user = await userRepository.findByGoogleId(profile.googleId);
+export const findUserByGoogleId = async (googleId: string): Promise<IUser | null> =>
+  User.findOne({ googleId }).lean<IUser>().exec();
 
-    if (user) {
-      return { user, isNew: false };
-    }
+export const createUser = async (data: Partial<IUser>): Promise<IUser> => {
+  const user = new User(data);
+  return user.save();
+};
 
-    // Check if email already exists with local auth
-    user = await userRepository.findByEmail(profile.email);
+export const updateUserRefreshToken = async (
+  userId: string,
+  refreshToken: string | null,
+): Promise<void> => {
+  await User.findByIdAndUpdate(userId, { refreshToken }).exec();
+};
 
-    if (user) {
-      // Link Google to existing account
-      user.googleId = profile.googleId;
-      user.authProvider = AuthProvider.GOOGLE;
-      user.isVerified = true;
-      if (!user.avatar && profile.avatar) {
-        user.avatar = profile.avatar;
-      }
-      await user.save();
-      return { user, isNew: false };
-    }
-
-    // Create brand new Google user
-    const newUser = await userRepository.create({
-      name: profile.name,
-      email: profile.email,
-      googleId: profile.googleId,
-      avatar: profile.avatar,
-      authProvider: AuthProvider.GOOGLE,
-      isVerified: true, // Google emails are verified
-    });
-
-    return { user: newUser, isNew: true };
-  }
-}
-
-export const authRepository = new AuthRepository();
+export const findUserByRefreshToken = async (token: string): Promise<IUser | null> =>
+  User.findOne({ refreshToken: token }).select("+refreshToken").lean<IUser>().exec();

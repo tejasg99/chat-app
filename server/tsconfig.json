@@ -3,7 +3,6 @@
     "target": "ES2022",
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "lib": ["ES2022"],
     "outDir": "./dist",
     "rootDir": "./",
     "strict": true,
@@ -14,27 +13,9 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "removeComments": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
-    "types": ["node"],
-    "paths": {
-      "@config/*": ["config/*"],
-      "@controllers/*": ["controllers/*"],
-      "@services/*": ["services/*"],
-      "@repositories/*": ["repositories/*"],
-      "@models/*": ["models/*"],
-      "@routes/*": ["routes/*"],
-      "@middlewares/*": ["middlewares/*"],
-      "@sockets/*": ["sockets/*"],
-      "@utils/*": ["utils/*"],
-      "@validations/*": ["validations/*"],
-      "@types/*": ["types/*"]
-    }
+    "noEmit": true,
+    "allowImportingTsExtensions": true
   },
-  "include": ["config", "controllers", "services", "repositories", "models", "routes", "middlewares", "sockets", "utils", "validations", "types"],
-  "exclude": ["node_modules", "dist", "tests"]
+  "include": ["./**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

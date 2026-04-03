@@ -1,72 +1,60 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
-import { userRepository } from "../repositories/user.repository";
-import { authRepository } from "../repositories/auth.repository";
-import { logger } from "../utils/logger";
-import type { IUser } from "../models/user.model";
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
+import { env } from "./env.ts";
+import { googleAuthService } from "../services/auth.service.ts";
+import { findUserById } from "../repositories/auth.repository.ts";
+import type { JwtAccessPayload } from "../types/index.ts";
 
-/**
- * Configure Passport with Google OAuth strategy.
- * Called once during app initialization.
- */
-export const configurePassport = (): void => {
-  // ── Serialize / Deserialize ─────────────────────────────────────────────
-  // Used for session management (we use JWT, but passport still needs these)
+// ─── JWT Strategy ─────────────────────────────────────────────────────────────
+passport.use(
+  new JwtStrategy(
+    {
+      jwtFromRequest: ExtractJwt.fromExtractors([
+        (req) => req?.cookies?.accessToken ?? null,
+        ExtractJwt.fromAuthHeaderAsBearerToken(),
+      ]),
+      secretOrKey: env.jwtAccessSecret,
+    },
+    async (payload: JwtAccessPayload, done) => {
+      try {
+        const user = await findUserById(payload.userId);
+        if (!user) return done(null, false);
+        return done(null, user);
+      } catch (error) {
+        return done(error, false);
+      }
+    },
+  ),
+);
 
-  passport.serializeUser((user, done) => {
-    done(null, (user as IUser)._id.toString());
-  });
+// ─── Google OAuth Strategy ────────────────────────────────────────────────────
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: env.googleClientId,
+      clientSecret: env.googleClientSecret,
+      callbackURL: env.googleCallbackUrl,
+    },
+    async (_accessToken, _refreshToken, profile, done) => {
+      try {
+        const email = profile.emails?.[0]?.value;
+        if (!email) return done(new Error("No email from Google"), false);
 
-  passport.deserializeUser(async (id: string, done) => {
-    try {
-      const user = await userRepository.findById(id);
-      done(null, user);
-    } catch (error) {
-      done(error, null);
-    }
-  });
+        const { user, tokens } = await googleAuthService({
+          googleId: profile.id,
+          email,
+          name: profile.displayName,
+          avatar: profile.photos?.[0]?.value,
+        });
 
-  // ── Google OAuth Strategy ───────────────────────────────────────────────
-  const clientID = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-  const callbackURL = process.env.GOOGLE_CALLBACK_URL;
+        // Pass tokens along for the callback to use
+        return done(null, { user, tokens });
+      } catch (error) {
+        return done(error as Error, false);
+      }
+    },
+  ),
+);
 
-  if (!clientID || !clientSecret || !callbackURL) {
-    logger.warn("Google OAuth credentials not configured. Google login will be unavailable.");
-    return;
-  }
-
-  passport.use(
-    new GoogleStrategy(
-      {
-        clientID,
-        clientSecret,
-        callbackURL,
-        scope: ["profile", "email"],
-      },
-      async (_accessToken, _refreshToken, profile, done) => {
-        try {
-          const email = profile.emails?.[0]?.value;
-
-          if (!email) {
-            return done(new Error("No email found in Google profile"), undefined);
-          }
-
-          const { user } = await authRepository.findOrCreateGoogleUser({
-            googleId: profile.id,
-            email,
-            name: profile.displayName,
-            avatar: profile.photos?.[0]?.value,
-          });
-
-          return done(null, user);
-        } catch (error) {
-          logger.error({ error }, "Google OAuth strategy error");
-          return done(error as Error, undefined);
-        }
-      },
-    ),
-  );
-
-  logger.info("✅ Passport Google OAuth strategy configured.");
-};
+export default passport;

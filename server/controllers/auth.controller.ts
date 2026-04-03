@@ -1,136 +1,122 @@
-import type { Request, Response, NextFunction } from "express";
-import { authService } from "../services/auth.service";
-import { sendSuccess } from "../utils/ApiResponse";
-import { ApiError } from "../utils/ApiError";
-import type { SignupInput, LoginInput } from "../validations/auth.validation";
-import type { IUser } from "../models/user.model";
+import { Request, Response } from "express";
+import {
+  signupService,
+  loginService,
+  refreshTokenService,
+  logoutService,
+} from "../services/auth.service.ts";
+import { signupSchema, loginSchema } from "../validations/auth.validation.ts";
+import { asyncHandler } from "../utils/asyncHandler.ts";
+import { createApiResponse } from "../utils/ApiResponse.ts";
+import { ApiError } from "../utils/ApiError.ts";
+import { env } from "../config/env.ts";
 
-/**
- * Auth Controller — only handles HTTP request/response.
- * All business logic lives in authService.
- */
-export class AuthController {
-  /**
-   * POST /api/auth/signup
-   */
-  async signup(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const body = req.body as SignupInput;
-      const result = await authService.signup(body, res);
+const cookieOptions = {
+  httpOnly: true,
+  secure: env.nodeEnv === "production",
+  sameSite: "strict" as const,
+};
 
-      sendSuccess(res, "Account created successfully.", result, 201);
-    } catch (error) {
-      next(error);
-    }
-  }
+// ─── Signup ───────────────────────────────────────────────────────────────────
+export const signup = asyncHandler(async (req: Request, res: Response) => {
+  const parsed = signupSchema.safeParse(req.body);
+  if (!parsed.success) throw parsed.error;
 
-  /**
-   * POST /api/auth/login
-   */
-  async login(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const body = req.body as LoginInput;
-      const result = await authService.login(body, res);
+  const { user, tokens } = await signupService(parsed.data);
 
-      sendSuccess(res, "Logged in successfully.", result, 200);
-    } catch (error) {
-      next(error);
-    }
-  }
+  res
+    .cookie("accessToken", tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    })
+    .cookie("refreshToken", tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .status(201)
+    .json(
+      createApiResponse(201, "Account created successfully", {
+        user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
+        accessToken: tokens.accessToken,
+      }),
+    );
+});
 
-  /**
-   * POST /api/auth/refresh-token
-   * Reads refresh token from HTTP-only cookie.
-   */
-  async refreshToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const refreshToken = req.cookies?.refreshToken as string | undefined;
+// ─── Login ────────────────────────────────────────────────────────────────────
+export const login = asyncHandler(async (req: Request, res: Response) => {
+  const parsed = loginSchema.safeParse(req.body);
+  if (!parsed.success) throw parsed.error;
 
-      if (!refreshToken) {
-        throw ApiError.unauthorized("No refresh token provided.");
-      }
+  const { user, tokens } = await loginService(parsed.data);
 
-      const result = await authService.refreshAccessToken(refreshToken, res);
-      sendSuccess(res, "Access token refreshed.", result, 200);
-    } catch (error) {
-      next(error);
-    }
-  }
+  res
+    .cookie("accessToken", tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    })
+    .cookie("refreshToken", tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .status(200)
+    .json(
+      createApiResponse(200, "Login successful", {
+        user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
+        accessToken: tokens.accessToken,
+      }),
+    );
+});
 
-  /**
-   * POST /api/auth/logout
-   * Requires authentication.
-   */
-  async logout(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const refreshToken = req.cookies?.refreshToken as string | undefined;
+// ─── Refresh Token ────────────────────────────────────────────────────────────
+export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
+  const incoming = req.cookies?.refreshToken ?? req.body?.refreshToken;
+  if (!incoming) throw new ApiError(401, "Refresh token not provided");
 
-      if (!refreshToken) {
-        throw ApiError.badRequest("No refresh token found.");
-      }
+  const tokens = await refreshTokenService(incoming);
 
-      await authService.logout(req.user!._id.toString(), refreshToken, res);
-      sendSuccess(res, "Logged out successfully.", null, 200);
-    } catch (error) {
-      next(error);
-    }
-  }
+  res
+    .cookie("accessToken", tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    })
+    .cookie("refreshToken", tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .status(200)
+    .json(createApiResponse(200, "Tokens refreshed", { accessToken: tokens.accessToken }));
+});
 
-  /**
-   * POST /api/auth/logout-all
-   * Logs out from all devices.
-   */
-  async logoutAll(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      await authService.logoutAll(req.user!._id.toString(), res);
-      sendSuccess(res, "Logged out from all devices.", null, 200);
-    } catch (error) {
-      next(error);
-    }
-  }
+// ─── Logout ───────────────────────────────────────────────────────────────────
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+  // req.user is IUser | undefined — typed correctly via namespace augmentation
+  await logoutService(req.user!._id.toString());
 
-  /**
-   * GET /api/auth/google/callback
-   * Handles the Google OAuth callback.
-   */
-  async googleCallback(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const googleUser = req.user as IUser;
+  res
+    .clearCookie("accessToken")
+    .clearCookie("refreshToken")
+    .status(200)
+    .json(createApiResponse(200, "Logged out successfully"));
+});
 
-      if (!googleUser) {
-        throw ApiError.unauthorized("Google authentication failed.");
-      }
+// ─── Google Callback ──────────────────────────────────────────────────────────
+export const googleCallback = asyncHandler(async (req: Request, res: Response) => {
+  // Passport attaches the done() payload to req.user
+  const result = req.user as unknown as {
+    user: { _id: string };
+    tokens: { accessToken: string; refreshToken: string };
+  };
 
-      const result = await authService.handleGoogleCallback(
-        {
-          googleId: googleUser.googleId!,
-          email: googleUser.email,
-          name: googleUser.name,
-          avatar: googleUser.avatar,
-        },
-        res,
-      );
+  if (!result?.tokens) throw new ApiError(401, "Google authentication failed");
 
-      // Redirect to client with access token as query param
-      // In production, consider a more secure handoff
-      const clientUrl = process.env.CLIENT_URL ?? "http://localhost:3000";
-      res.redirect(`${clientUrl}/auth/callback?token=${result.accessToken}`);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  /**
-   * GET /api/auth/me
-   * Returns the currently authenticated user.
-   */
-  async getMe(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      sendSuccess(res, "Authenticated user fetched.", req.user!.toSafeObject(), 200);
-    } catch (error) {
-      next(error);
-    }
-  }
-}
-
-export const authController = new AuthController();
+  res
+    .cookie("accessToken", result.tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60 * 1000,
+    })
+    .cookie("refreshToken", result.tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    })
+    .redirect(`${env.clientUrl}/auth/success`);
+});
