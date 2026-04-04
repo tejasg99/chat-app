@@ -24,4 +24,11 @@ export const env = {
   googleCallbackUrl: getEnv("GOOGLE_CALLBACK_URL"),
 
   clientUrl: getEnv("CLIENT_URL", "http://localhost:3000"),
+
+  redisUrl: getEnv("REDIS_URL"),
+  redisToken: getEnv("REDIS_TOKEN", ""),
+
+  cloudinaryCloudName: getEnv("CLOUDINARY_CLOUD_NAME"),
+  cloudinaryApiKey: getEnv("CLOUDINARY_API_KEY"),
+  cloudinaryApiSecret: getEnv("CLOUDINARY_API_SECRET"),
 } as const;
