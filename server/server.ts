@@ -3,14 +3,19 @@ import app from "./app.ts";
 import { connectDB } from "./config/db.ts";
 import { env } from "./config/env.ts";
 import { logger } from "./utils/logger.ts";
+import { initSocket } from "./sockets/index.ts";
 
 const startServer = async (): Promise<void> => {
   await connectDB();
 
   const httpServer = createServer(app);
 
+  // Initialize Socket.io — must be done on the raw httpServer, not on app
+  initSocket(httpServer);
+
   httpServer.listen(env.port, () => {
     logger.info(`🚀 Server running on port ${env.port} in ${env.nodeEnv} mode`);
+    logger.info(`⚡ Socket.io ready`);
   });
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────
