@@ -2,10 +2,12 @@ import { Router } from "express";
 import {
   getProfile,
   updateProfile,
+  uploadAvatar,
   blockUserHandler,
   unblockUserHandler,
 } from "../controllers/user.controller.ts";
 import { protect } from "../middlewares/auth.middleware.ts";
+import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/upload.middleware.ts";
 
 const router = Router();
 
@@ -14,6 +16,7 @@ router.use(protect);
 
 router.get("/me", getProfile);
 router.patch("/me", updateProfile);
+router.post("/me/avatar", uploadAvatarMiddleware, uploadAvatar); // Multer middleware runs before the controller to parse the multipart form
 router.post("/block/:targetId", blockUserHandler);
 router.delete("/block/:targetId", unblockUserHandler);
 

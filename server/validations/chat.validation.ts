@@ -34,7 +34,34 @@ export const paginationSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(30),
 });
 
+export const reactionSchema = z.object({
+  emoji: z
+    .string({ error: "Emoji is required" })
+    .min(1, "Emoji cannot be empty")
+    .max(10, "Invalid emoji"),
+});
+
+export const createReportSchema = z.object({
+  targetType: z.enum(["user", "message"], {
+    error: "Target type is required",
+  }),
+  targetId: z.string({ error: "Target ID is required" }).min(1, "Target ID cannot be empty"),
+  reason: z.enum(["spam", "harassment", "hate_speech", "inappropriate_content", "other"], {
+    error: "Reason is required",
+  }),
+  description: z.string().trim().max(500, "Description cannot exceed 500 characters").optional(),
+});
+
+export const updateReportStatusSchema = z.object({
+  status: z.enum(["reviewed", "resolved", "dismissed"], {
+    error: "Status is required",
+  }),
+});
+
 export type CreateDirectChatSchema = z.infer<typeof createDirectChatSchema>;
 export type CreateGroupChatSchema = z.infer<typeof createGroupChatSchema>;
 export type SendMessageSchema = z.infer<typeof sendMessageSchema>;
 export type PaginationSchema = z.infer<typeof paginationSchema>;
+export type ReactionSchema = z.infer<typeof reactionSchema>;
+export type CreateReportSchema = z.infer<typeof createReportSchema>;
+export type UpdateReportStatusSchema = z.infer<typeof updateReportStatusSchema>;

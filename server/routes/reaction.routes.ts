@@ -1,5 +1,4 @@
 import { Router } from "express";
-import { deleteMessage } from "../controllers/message.controller.ts";
 import { toggleReaction } from "../controllers/reaction.controller.ts";
 import { protect } from "../middlewares/auth.middleware.ts";
 
@@ -7,8 +6,7 @@ const router = Router();
 
 router.use(protect);
 
-// Standalone message operations (not scoped to a chat)
-router.delete("/:messageId", deleteMessage);
+// POST /api/messages/:messageId/reactions
 router.post("/:messageId/reactions", toggleReaction);
 
 export default router;

@@ -4,14 +4,20 @@ import { connectDB } from "./config/db.ts";
 import { env } from "./config/env.ts";
 import { logger } from "./utils/logger.ts";
 import { initSocket } from "./sockets/index.ts";
+import { redisClient } from "./config/redis.ts";
 
 const startServer = async (): Promise<void> => {
   await connectDB();
 
+  // ─── Connect standalone Redis client (used for caching) ──────────────────
+  // The pub/sub clients for Socket.io are connected inside initSocket()
+  await redisClient.connect();
+  logger.info("Redis cache client connected");
+
   const httpServer = createServer(app);
 
-  // Initialize Socket.io — must be done on the raw httpServer, not on app
-  initSocket(httpServer);
+  // ─── Initialize Socket.io with Redis adapter ──────────────────────────────
+  await initSocket(httpServer);
 
   httpServer.listen(env.port, () => {
     logger.info(`🚀 Server running on port ${env.port} in ${env.nodeEnv} mode`);
@@ -19,10 +25,16 @@ const startServer = async (): Promise<void> => {
   });
 
   // ─── Graceful Shutdown ────────────────────────────────────────────────────
-  const shutdown = (signal: string) => {
+  const shutdown = async (signal: string): Promise<void> => {
     logger.info(`${signal} received — shutting down gracefully`);
-    httpServer.close(() => {
+
+    httpServer.close(async () => {
       logger.info("HTTP server closed");
+
+      // Disconnect Redis before exiting
+      await redisClient.quit();
+      logger.info("Redis client disconnected");
+
       process.exit(0);
     });
   };

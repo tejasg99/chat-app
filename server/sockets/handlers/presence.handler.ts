@@ -1,5 +1,6 @@
 import type { Server, Socket } from "socket.io";
 import { setUserOnlineStatus } from "../../repositories/user.repository.ts";
+import { addOnlineUser, removeOnlineUser } from "../../config/redis.ts";
 import { logger } from "../../utils/logger.ts";
 import type {
   ServerToClientEvents,
@@ -14,11 +15,11 @@ type SocketType = Socket<ClientToServerEvents, ServerToClientEvents, InterServer
 export const registerPresenceHandlers = (io: IoType, socket: SocketType): void => {
   const userId = socket.data.userId;
 
-  // ─── On connect: mark online, broadcast to all ────────────────────────────
   const handleConnect = async () => {
     try {
-      await setUserOnlineStatus(userId, true);
-      // Broadcast to everyone except this socket
+      // Write to both MongoDB (persistent) and Redis (fast lookup)
+      await Promise.all([setUserOnlineStatus(userId, true), addOnlineUser(userId)]);
+
       socket.broadcast.emit("user:online", { userId });
       logger.debug(`User ${userId} is now online`);
     } catch (error) {
@@ -26,11 +27,12 @@ export const registerPresenceHandlers = (io: IoType, socket: SocketType): void =
     }
   };
 
-  // ─── On disconnect: mark offline, broadcast with lastSeen ─────────────────
   const handleDisconnect = async () => {
     try {
-      await setUserOnlineStatus(userId, false);
       const lastSeen = new Date();
+
+      await Promise.all([setUserOnlineStatus(userId, false), removeOnlineUser(userId)]);
+
       socket.broadcast.emit("user:offline", { userId, lastSeen });
       logger.info(`Socket disconnected: ${socket.id} | User: ${userId}`);
     } catch (error) {

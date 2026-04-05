@@ -7,8 +7,14 @@ import {
   addMembers,
   removeMember,
 } from "../controllers/chat.controller.ts";
-import { getMessages, sendMessage, markAsRead } from "../controllers/message.controller.ts";
+import {
+  getMessages,
+  sendMessage,
+  sendImageMessage,
+  markAsRead,
+} from "../controllers/message.controller.ts";
 import { protect } from "../middlewares/auth.middleware.ts";
+import { uploadChatImage } from "../middlewares/upload.middleware.ts";
 
 const router = Router();
 
@@ -26,6 +32,7 @@ router.delete("/:chatId/members/:memberId", removeMember);
 // ─── Message Routes (scoped under chat) ──────────────────────────────────────
 router.get("/:chatId/messages", getMessages);
 router.post("/:chatId/messages", sendMessage);
+router.post("/:chatId/messages/image", uploadChatImage, sendImageMessage);
 router.patch("/:chatId/messages/read", markAsRead);
 
 export default router;

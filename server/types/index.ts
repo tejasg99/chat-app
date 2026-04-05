@@ -147,6 +147,51 @@ export interface GetMessagesInput {
   limit?: number;
 }
 
+// ─── Reaction ─────────────────────────────────────────────────────────────────
+
+export interface IReactionToggleInput {
+  messageId: string;
+  userId: string;
+  emoji: string;
+}
+
+// ─── Report ──────────────────────────────────────────────────────────────────
+
+export type ReportReason =
+  | "spam"
+  | "harassment"
+  | "hate_speech"
+  | "inappropriate_content"
+  | "other";
+
+export type ReportStatus = "pending" | "reviewed" | "resolved" | "dismissed";
+
+export type ReportTargetType = "user" | "message";
+
+export interface IReport extends Document {
+  _id: Types.ObjectId;
+  reportedBy: Types.ObjectId;
+  targetType: ReportTargetType;
+  targetId: Types.ObjectId;
+  reason: ReportReason;
+  description?: string;
+  status: ReportStatus;
+  reviewedBy?: Types.ObjectId;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ─── Upload ───────────────────────────────────────────────────────────────────
+
+export interface UploadResult {
+  url: string;
+  publicId: string;
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
+}
+
 // ─── Socket ──────────────────────────────────────────────────────────────────
 
 export interface SocketUser {
@@ -154,9 +199,18 @@ export interface SocketUser {
   socketId: string;
 }
 
+export interface ReadReceiptPayload {
+  chatId: string;
+  userId: string;
+  messageIds: string[];
+  readAt: Date;
+}
+
 export interface ServerToClientEvents {
   "message:new": (message: IMessage) => void;
   "message:deleted": (data: { messageId: string; chatId: string }) => void;
+  "message:reaction": (data: { messageId: string; chatId: string; reactions: IReaction[] }) => void;
+  "message:read": (data: ReadReceiptPayload) => void;
   "chat:new": (chat: IChat) => void;
   "user:online": (data: { userId: string }) => void;
   "user:offline": (data: { userId: string; lastSeen: Date }) => void;
@@ -173,6 +227,8 @@ export interface ClientToServerEvents {
     replyTo?: string;
   }) => void;
   "message:delete": (data: { messageId: string; chatId: string }) => void;
+  "message:read": (data: { chatId: string }) => void;
+  "message:react": (data: { messageId: string; chatId: string; emoji: string }) => void;
   "typing:start": (data: { chatId: string }) => void;
   "typing:stop": (data: { chatId: string }) => void;
   "chat:join": (chatId: string) => void;

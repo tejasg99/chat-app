@@ -5,9 +5,11 @@ import {
   deleteMessageService,
   markAsReadService,
 } from "../services/message.service.ts";
+import { uploadImageService } from "../services/upload.service.ts";
 import { sendMessageSchema, paginationSchema } from "../validations/chat.validation.ts";
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
+import { ApiError } from "../utils/ApiError.ts";
 
 // ─── GET /api/chats/:chatId/messages — Get paginated messages ─────────────────
 export const getMessages = asyncHandler(async (req: Request, res: Response) => {
@@ -39,6 +41,25 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   });
 
   res.status(201).json(createApiResponse(201, "Message sent", message));
+});
+
+// ─── POST /api/chats/:chatId/messages/image — Upload image as a message ───────
+export const sendImageMessage = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) throw new ApiError(400, "No image file provided");
+
+  // Upload to Cloudinary first
+  const uploadResult = await uploadImageService(req.file.buffer, "chat-app/messages");
+
+  // Then create the message with the CDN URL as content
+  const message = await sendMessageService({
+    chatId: req.params.chatId as string,
+    senderId: req.user!._id.toString(),
+    content: uploadResult.url,
+    type: "image",
+    replyTo: req.body.replyTo,
+  });
+
+  res.status(201).json(createApiResponse(201, "Image message sent", message));
 });
 
 // ─── DELETE /api/messages/:messageId — Soft delete a message ─────────────────

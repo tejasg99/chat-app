@@ -1,6 +1,8 @@
 import type { Server, Socket } from "socket.io";
 import { sendMessageService, deleteMessageService } from "../../services/message.service.ts";
+import { toggleReactionService } from "../../services/reaction.service.ts";
 import { isChatMember } from "../../repositories/chat.repository.ts";
+import { markMessagesAsRead, findMessagesByChat } from "../../repositories/message.repository.ts";
 import { logger } from "../../utils/logger.ts";
 import type {
   ServerToClientEvents,
@@ -70,6 +72,60 @@ export const registerChatHandlers = (io: IoType, socket: SocketType): void => {
       logger.error({ error }, "message:delete error");
       socket.emit("error", {
         message: error instanceof Error ? error.message : "Failed to delete message",
+      });
+    }
+  });
+
+  // ─── Read receipts ────────────────────────────────────────────────────────
+  // When a user opens a chat or scrolls through messages, the client
+  // emits this event. We mark all unread messages and broadcast to the room
+  // so other participants' UIs can update their "seen" indicators.
+  socket.on("message:read", async ({ chatId }) => {
+    try {
+      const isMember = await isChatMember(chatId, userId);
+      if (!isMember) return;
+
+      await markMessagesAsRead(chatId, userId);
+
+      // Fetch the IDs of messages that are now read so the client
+      // can update only those specific messages, not the entire list
+      const recentMessages = await findMessagesByChat(chatId, 1, 50);
+      const messageIds = recentMessages
+        .filter((m) => m.readBy.map((id) => id.toString()).includes(userId))
+        .map((m) => m._id.toString());
+
+      // Broadcast to entire room — sender excluded using socket.to()
+      socket.to(chatId).emit("message:read", {
+        chatId,
+        userId,
+        messageIds,
+        readAt: new Date(),
+      });
+    } catch (error) {
+      logger.error({ error }, "message:read error");
+    }
+  });
+
+  // ─── Reactions via socket ─────────────────────────────────────────────────
+  // Complementing the REST endpoint — clients can react in real time
+  socket.on("message:react", async ({ messageId, chatId, emoji }) => {
+    try {
+      const { reactions } = await toggleReactionService({
+        messageId,
+        userId,
+        emoji,
+      });
+
+      // Broadcast updated reactions to all chat members
+      io.to(chatId).emit("message:reaction", {
+        messageId,
+        chatId,
+        reactions,
+      });
+    } catch (error) {
+      logger.error({ error }, "message:react error");
+      socket.emit("error", {
+        message: error instanceof Error ? error.message : "Failed to update reaction",
       });
     }
   });
