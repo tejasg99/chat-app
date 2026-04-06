@@ -6,20 +6,28 @@ import {
   markAsReadService,
 } from "../services/message.service.ts";
 import { uploadImageService } from "../services/upload.service.ts";
-import { sendMessageSchema, paginationSchema } from "../validations/chat.validation.ts";
+import { sendMessageSchema, messagePaginationSchema } from "../validations/chat.validation.ts";
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
 import { ApiError } from "../utils/ApiError.ts";
 
-// ─── GET /api/chats/:chatId/messages — Get paginated messages ─────────────────
+// ─── GET /api/chats/:chatId/messages ─────────────────────────────────────────
+// Query params:
+//   cursor  — _id of the oldest message the client has (omit for first load)
+//   limit   — number of messages to fetch (default 30, max 50)
+//
+// Usage flow:
+//   1. Open chat  → GET /messages              (no cursor)
+//   2. Scroll up  → GET /messages?cursor=<id>  (cursor from previous response)
+//   3. New msgs   → delivered via Socket.io, no polling needed
 export const getMessages = asyncHandler(async (req: Request, res: Response) => {
-  const parsed = paginationSchema.safeParse(req.query);
+  const parsed = messagePaginationSchema.safeParse(req.query);
   if (!parsed.success) throw parsed.error;
 
   const result = await getMessagesService({
     chatId: req.params.chatId as string,
     userId: req.user!._id.toString(),
-    page: parsed.data.page,
+    cursor: parsed.data.cursor,
     limit: parsed.data.limit,
   });
 

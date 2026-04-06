@@ -29,9 +29,18 @@ export const sendMessageSchema = z.object({
   replyTo: z.string().optional(),
 });
 
-export const paginationSchema = z.object({
+// ─── Cursor-based pagination schema ───────────────────────────────────────────
+// cursor = the _id of the oldest message the client currently has
+// limit  = how many messages to fetch (default 30, max 50)
+export const messagePaginationSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(30),
+});
+
+// ─── Kept for report/admin endpoints that still use offset ────────────────────
+export const offsetPaginationSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(30),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
 });
 
 export const reactionSchema = z.object({
@@ -61,7 +70,8 @@ export const updateReportStatusSchema = z.object({
 export type CreateDirectChatSchema = z.infer<typeof createDirectChatSchema>;
 export type CreateGroupChatSchema = z.infer<typeof createGroupChatSchema>;
 export type SendMessageSchema = z.infer<typeof sendMessageSchema>;
-export type PaginationSchema = z.infer<typeof paginationSchema>;
+export type MessagePaginationSchema = z.infer<typeof messagePaginationSchema>;
+export type OffsetPaginationSchema = z.infer<typeof offsetPaginationSchema>;
 export type ReactionSchema = z.infer<typeof reactionSchema>;
 export type CreateReportSchema = z.infer<typeof createReportSchema>;
 export type UpdateReportStatusSchema = z.infer<typeof updateReportStatusSchema>;

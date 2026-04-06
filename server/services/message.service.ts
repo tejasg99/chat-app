@@ -8,7 +8,12 @@ import {
   markMessagesAsRead,
 } from "../repositories/message.repository.ts";
 import { isChatMember, updateChatLastMessage } from "../repositories/chat.repository.ts";
-import type { IMessage, SendMessageInput, GetMessagesInput } from "../types/index.ts";
+import type {
+  IMessage,
+  SendMessageInput,
+  GetMessagesInput,
+  PaginatedMessages,
+} from "../types/index.ts";
 
 // ─── Send a message ───────────────────────────────────────────────────────────
 
@@ -36,41 +41,42 @@ export const sendMessageService = async (input: SendMessageInput): Promise<IMess
     readBy: [senderId as unknown as never],
   });
 
-  // Update the chat's lastMessage pointer
   await updateChatLastMessage(chatId, message._id.toString());
 
   return message;
 };
 
-// ─── Get paginated messages for a chat ───────────────────────────────────────
+// ─── Get cursor-paginated messages ────────────────────────────────────────────
 
-export const getMessagesService = async (
-  input: GetMessagesInput,
-): Promise<{
-  messages: IMessage[];
-  total: number;
-  page: number;
-  totalPages: number;
-  hasMore: boolean;
-}> => {
-  const { chatId, userId, page = 1, limit = 30 } = input;
+export const getMessagesService = async (input: GetMessagesInput): Promise<PaginatedMessages> => {
+  const { chatId, userId, cursor, limit = 30 } = input;
 
   const isMember = await isChatMember(chatId, userId);
   if (!isMember) throw new ApiError(403, "You are not a member of this chat");
 
-  const [messages, total] = await Promise.all([
-    findMessagesByChat(chatId, page, limit),
-    countMessagesByChat(chatId),
-  ]);
+  // Fetch one extra message beyond the limit to determine if more exist
+  // without a separate count query on every paginated request
+  const messages = await findMessagesByChat(chatId, limit + 1, cursor);
 
-  const totalPages = Math.ceil(total / limit);
+  const hasMore = messages.length > limit;
+
+  // Trim the extra message we fetched for the hasMore check
+  const trimmed = hasMore ? messages.slice(0, limit) : messages;
+
+  // The next cursor is the _id of the oldest message in this batch
+  // (last item since results are newest-first)
+  const nextCursor =
+    hasMore && trimmed.length > 0 ? trimmed[trimmed.length - 1]._id.toString() : null;
+
+  // Total count is only fetched on the first load (no cursor)
+  // to avoid an expensive countDocuments on every scroll
+  const total = !cursor ? await countMessagesByChat(chatId) : 0;
 
   return {
-    messages,
+    messages: trimmed,
+    nextCursor,
+    hasMore,
     total,
-    page,
-    totalPages,
-    hasMore: page < totalPages,
   };
 };
 

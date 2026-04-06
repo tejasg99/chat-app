@@ -143,8 +143,15 @@ export interface SendMessageInput {
 export interface GetMessagesInput {
   chatId: string;
   userId: string;
-  page?: number;
+  cursor?: string; // _id of the oldest message the client already has
   limit?: number;
+}
+
+export interface PaginatedMessages {
+  messages: IMessage[];
+  nextCursor: string | null; // Pass this back on the next request
+  hasMore: boolean;
+  total: number;
 }
 
 // ─── Reaction ─────────────────────────────────────────────────────────────────
