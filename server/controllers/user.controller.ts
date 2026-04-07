@@ -4,9 +4,10 @@ import {
   updateProfileService,
   blockUserService,
   unblockUserService,
+  searchUsersService,
 } from "../services/user.service.ts";
 import { uploadAvatarService } from "../services/upload.service.ts";
-import { updateProfileSchema } from "../validations/user.validation.ts";
+import { updateProfileSchema, searchUsersSchema } from "../validations/user.validation.ts";
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
 import { ApiError } from "../utils/ApiError.ts";
@@ -57,4 +58,21 @@ export const unblockUserHandler = asyncHandler(async (req: Request, res: Respons
   await unblockUserService(req.user!._id.toString(), targetId as string);
 
   res.status(200).json(createApiResponse(200, "User unblocked successfully"));
+});
+
+// ─── GET /api/users/search?q=&limit= ─────────────────────────────────────────
+// Searches users by name or email
+// Excludes: self, blocked users, system-blocked accounts
+// Returns: name, email, avatar, isOnline, lastSeen only (no sensitive fields)
+export const searchUsers = asyncHandler(async (req: Request, res: Response) => {
+  const parsed = searchUsersSchema.safeParse(req.query);
+  if (!parsed.success) throw parsed.error;
+
+  const users = await searchUsersService(
+    parsed.data.q,
+    req.user!._id.toString(),
+    parsed.data.limit,
+  );
+
+  res.status(200).json(createApiResponse(200, "Search results", users));
 });

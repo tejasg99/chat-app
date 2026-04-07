@@ -66,6 +66,13 @@ const userSchema = new Schema<IUser>(
   },
 );
 
+// Compound text index for user search across name and email fields
+// Weight 10 on name means name matches rank higher than email matches
+userSchema.index(
+  { name: "text", email: "text" },
+  { weights: { name: 10, email: 5 }, name: "user_search_text_index" },
+);
+
 // ─── Pre-save: hash password ──────────────────────────────────────────────────
 userSchema.pre("save", async function () {
   // Only hash if password was modified

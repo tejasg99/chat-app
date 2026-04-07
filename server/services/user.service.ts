@@ -5,6 +5,7 @@ import {
   setUserOnlineStatus,
   blockUser,
   unblockUser,
+  searchUsers,
 } from "../repositories/user.repository.ts";
 import { findUserById } from "../repositories/auth.repository.ts";
 import { getCache, setCache, deleteCache, CACHE_TTL } from "../config/redis.ts";
@@ -59,4 +60,19 @@ export const blockUserService = async (userId: string, targetId: string): Promis
 export const unblockUserService = async (userId: string, targetId: string): Promise<void> => {
   await unblockUser(userId, targetId);
   await deleteCache(userCacheKey(userId));
+};
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+export const searchUsersService = async (
+  query: string,
+  currentUserId: string,
+  limit: number,
+): Promise<IUser[]> => {
+  // Fetch the current user's blocked list to exclude from results
+  const currentUser = await findUserByIdFull(currentUserId);
+  if (!currentUser) throw new ApiError(404, "User not found");
+
+  const blockedIds = currentUser.blockedUsers.map((id) => id.toString());
+
+  return searchUsers(query, currentUserId, blockedIds, limit);
 };

@@ -28,3 +28,35 @@ export const unblockUser = async (userId: string, targetId: string): Promise<voi
     $pull: { blockedUsers: targetId },
   }).exec();
 };
+
+// ─── User Search ──────────────────────────────────────────────────────────────
+// Searches name + email using MongoDB text index
+// Excludes:
+//   - The searching user themselves
+//   - Users who have been blocked by the searching user
+//   - Users who are system-blocked (isBlocked: true)
+//   - Sensitive fields (password, refreshToken excluded by default via select:false)
+export const searchUsers = async (
+  query: string,
+  currentUserId: string,
+  blockedUserIds: string[],
+  limit: number,
+): Promise<IUser[]> =>
+  User.find(
+    {
+      $text: { $search: query },
+      _id: {
+        $ne: currentUserId,
+        // Exclude users the current user has blocked
+        ...(blockedUserIds.length > 0 && { $nin: blockedUserIds }),
+      },
+      isBlocked: false,
+    },
+    // Project the text score so we can sort by relevance
+    { score: { $meta: "textScore" } },
+  )
+    .select("name email avatar isOnline lastSeen")
+    .sort({ score: { $meta: "textScore" } })
+    .limit(limit)
+    .lean<IUser[]>()
+    .exec();

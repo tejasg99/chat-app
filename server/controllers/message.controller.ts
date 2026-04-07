@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import type { Server } from "socket.io";
 import {
   sendMessageService,
   getMessagesService,
@@ -10,6 +11,16 @@ import { sendMessageSchema, messagePaginationSchema } from "../validations/chat.
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
 import { ApiError } from "../utils/ApiError.ts";
+import type { ServerToClientEvents } from "../types/index.ts";
+
+// ─── io injection ─────────────────────────────────────────────────────────────
+// Injected after Socket.io initializes in sockets/index.ts
+// Allows this REST controller to broadcast socket events
+let ioInstance: Server<ServerToClientEvents> | null = null;
+
+export const setMessageIoInstance = (io: Server): void => {
+  ioInstance = io as Server<ServerToClientEvents>;
+};
 
 // ─── GET /api/chats/:chatId/messages ─────────────────────────────────────────
 // Query params:
@@ -51,7 +62,13 @@ export const sendMessage = asyncHandler(async (req: Request, res: Response) => {
   res.status(201).json(createApiResponse(201, "Message sent", message));
 });
 
-// ─── POST /api/chats/:chatId/messages/image — Upload image as a message ───────
+// ─── POST /api/chats/:chatId/messages/image ───────────────────────────────────
+// Flow:
+//   1. Multer parses the multipart body → file lands in req.file.buffer
+//   2. Upload buffer to Cloudinary → get back a CDN URL
+//   3. Save a message doc with type: "image" and the CDN URL as content
+//   4. Broadcast the saved message to the chat room via Socket.io
+//      so all connected members see the image in real time without polling
 export const sendImageMessage = asyncHandler(async (req: Request, res: Response) => {
   if (!req.file) throw new ApiError(400, "No image file provided");
 
@@ -66,6 +83,12 @@ export const sendImageMessage = asyncHandler(async (req: Request, res: Response)
     type: "image",
     replyTo: req.body.replyTo,
   });
+
+  // Broadcast to the chat room so real-time clients receive the image message
+  // without needing a separate socket emit from the client side
+  if (ioInstance) {
+    ioInstance.to(req.params.chatId).emit("message:new", message);
+  }
 
   res.status(201).json(createApiResponse(201, "Image message sent", message));
 });
