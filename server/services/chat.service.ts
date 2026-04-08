@@ -8,6 +8,7 @@ import {
   isChatMember,
   addMembersToGroup,
   removeMemberFromGroup,
+  updateGroupAvatar,
 } from "../repositories/chat.repository.ts";
 import { findUserById } from "../repositories/auth.repository.ts";
 import type { IChat, CreateDirectChatInput, CreateGroupChatInput } from "../types/index.ts";
@@ -120,5 +121,30 @@ export const removeMemberService = async (
   }
 
   const updated = await removeMemberFromGroup(chatId, memberId);
+  return updated!;
+};
+
+// ─── Update group avatar ──────────────────────────────────────────────────────
+// Guards:
+//   - Chat must exist and be a group (no avatars for direct chats)
+//   - Only admins can change the group avatar
+export const updateGroupAvatarService = async (
+  chatId: string,
+  requesterId: string,
+  avatarUrl: string,
+): Promise<IChat> => {
+  const chat = await findChatById(chatId);
+  if (!chat) throw new ApiError(404, "Chat not found");
+
+  if (chat.type !== "group") {
+    throw new ApiError(400, "Cannot set an avatar on a direct chat");
+  }
+
+  const isAdmin = chat.admins.some((id) => id.toString() === requesterId);
+  if (!isAdmin) {
+    throw new ApiError(403, "Only admins can update the group avatar");
+  }
+
+  const updated = await updateGroupAvatar(chatId, avatarUrl);
   return updated!;
 };

@@ -65,3 +65,9 @@ export const removeMemberFromGroup = async (
   Chat.findByIdAndUpdate(chatId, { $pull: { members: memberId, admins: memberId } }, { new: true })
     .lean<IChat>()
     .exec();
+
+export const updateGroupAvatar = async (chatId: string, avatarUrl: string): Promise<IChat | null> =>
+  Chat.findByIdAndUpdate(chatId, { avatar: avatarUrl }, { new: true })
+    .populate("members", "name avatar isOnline lastSeen")
+    .lean<IChat>()
+    .exec();

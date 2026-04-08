@@ -6,10 +6,13 @@ import {
   getChatByIdService,
   addMembersService,
   removeMemberService,
+  updateGroupAvatarService,
 } from "../services/chat.service.ts";
 import { createDirectChatSchema, createGroupChatSchema } from "../validations/chat.validation.ts";
+import { uploadImageService } from "../services/upload.service.ts";
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
+import { ApiError } from "../utils/ApiError.ts";
 
 // ─── GET /api/chats — Get all chats for logged-in user ───────────────────────
 export const getUserChats = asyncHandler(async (req: Request, res: Response) => {
@@ -77,4 +80,28 @@ export const removeMember = asyncHandler(async (req: Request, res: Response) => 
     req.params.memberId as string,
   );
   res.status(200).json(createApiResponse(200, "Member removed", chat));
+});
+
+// ─── PATCH /api/chats/:chatId/avatar ─────────────────────────────────────────
+// Accepts a multipart/form-data request with field name "avatar"
+// Uploads to Cloudinary then updates the chat document
+// Admin only — guard enforced in service layer
+export const updateGroupAvatarHandler = asyncHandler(async (req: Request, res: Response) => {
+  if (!req.file) throw new ApiError(400, "No image file provided");
+
+  // Reuse the general image upload service with a dedicated folder
+  const uploadResult = await uploadImageService(req.file.buffer, "chat-app/group-avatars");
+
+  const chat = await updateGroupAvatarService(
+    req.params.chatId as string,
+    req.user!._id.toString(),
+    uploadResult.url,
+  );
+
+  res.status(200).json(
+    createApiResponse(200, "Group avatar updated", {
+      avatar: chat.avatar,
+      chat,
+    }),
+  );
 });

@@ -6,6 +6,7 @@ import {
   createGroupChat,
   addMembers,
   removeMember,
+  updateGroupAvatarHandler,
 } from "../controllers/chat.controller.ts";
 import {
   getMessages,
@@ -28,6 +29,9 @@ router.post("/direct", createDirectChat);
 router.post("/group", createGroupChat);
 router.post("/:chatId/members", addMembers);
 router.delete("/:chatId/members/:memberId", removeMember);
+
+// uploadChatImage middleware parses the multipart body before the controller
+router.patch("/:chatId/avatar", uploadChatImage, updateGroupAvatarHandler);
 
 // ─── Message Routes (scoped under chat) ──────────────────────────────────────
 router.get("/:chatId/messages", getMessages);
