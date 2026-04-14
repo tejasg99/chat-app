@@ -19,7 +19,7 @@ export const signupSchema = z.object({
     .max(100, "Password too long"),
 });
 
-export type SignupSchema = z.infer<typeof signupSchema>;
+export type SignupFormData = z.infer<typeof signupSchema>;
 
 // ─── Login ───────────────────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ export const loginSchema = z.object({
   password: z.string({ error: "Password is required" }).min(1, "Password is required"),
 });
 
-export type LoginSchema = z.infer<typeof loginSchema>;
+export type LoginFormData = z.infer<typeof loginSchema>;
 
 // ─── Update Profile ──────────────────────────────────────────────────────────
 
