@@ -1,26 +1,288 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
+/* ─── Tailwind v4 Theme ───────────────────────────────────────────────────── */
 @theme inline {
+  /* Fonts */
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-heading: "Manrope", system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono);
+
+  /* Shadcn token bridge */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* Radius scale */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* Sidebar tokens */
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+
+  /* Chart tokens */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* ── Design System Custom Tokens ──────────────────────────────────────── */
+  /* Surface hierarchy (no-line rule — define areas via color, not borders) */
+  --color-surface: var(--ds-surface);
+  --color-surface-container-lowest: var(--ds-surface-container-lowest);
+  --color-surface-container-low: var(--ds-surface-container-low);
+  --color-surface-container: var(--ds-surface-container);
+  --color-surface-container-high: var(--ds-surface-container-high);
+  --color-surface-container-highest: var(--ds-surface-container-highest);
+  --color-surface-variant: var(--ds-surface-variant);
+
+  /* Brand colors */
+  --color-brand-primary: var(--ds-primary);
+  --color-brand-primary-container: var(--ds-primary-container);
+  --color-brand-secondary: var(--ds-secondary);
+  --color-brand-secondary-container: var(--ds-secondary-container);
+  --color-brand-tertiary: var(--ds-tertiary);
+  --color-brand-tertiary-container: var(--ds-tertiary-container);
+
+  /* On-colors */
+  --color-on-surface: var(--ds-on-surface);
+  --color-on-surface-variant: var(--ds-on-surface-variant);
+  --color-on-primary: var(--ds-on-primary);
+  --color-on-secondary: var(--ds-on-secondary);
+  --color-on-tertiary: var(--ds-on-tertiary);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ─── Light Mode Design Tokens ────────────────────────────────────────────── */
+:root {
+  /* Shadcn / Radix tokens mapped to our brand */
+  --background: #f9f9ff;
+  --foreground: #141b2b;
+  --card: #ffffff;
+  --card-foreground: #141b2b;
+  --popover: #ffffff;
+  --popover-foreground: #141b2b;
+  --primary: #9d4300;
+  --primary-foreground: #ffffff;
+  --secondary: #f0f0f8;
+  --secondary-foreground: #141b2b;
+  --muted: #f0f0f8;
+  --muted-foreground: #584237;
+  --accent: #f0f0f8;
+  --accent-foreground: #141b2b;
+  --destructive: #ba1a1a;
+  --border: rgba(220, 226, 247, 0.5);
+  --input: #e8e8f0;
+  --ring: #9d4300;
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar: #f0f0f8;
+  --sidebar-foreground: #141b2b;
+  --sidebar-primary: #9d4300;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #dce2f7;
+  --sidebar-accent-foreground: #141b2b;
+  --sidebar-border: rgba(220, 226, 247, 0.5);
+  --sidebar-ring: #9d4300;
+
+  /* Charts */
+  --chart-1: #f97316;
+  --chart-2: #9d4300;
+  --chart-3: #006398;
+  --chart-4: #a73a00;
+  --chart-5: #00a2f4;
+
+  /* ── Design System Surface Hierarchy ────────────────────────────────── */
+  --ds-surface: #f9f9ff;
+  --ds-surface-container-lowest: #ffffff;
+  --ds-surface-container-low: #f0f0f8;
+  --ds-surface-container: #e8e8f0;
+  --ds-surface-container-high: #dde0ea;
+  --ds-surface-container-highest: #d7dae4;
+  --ds-surface-variant: #dce2f7;
+
+  /* Brand */
+  --ds-primary: #9d4300;
+  --ds-primary-container: #f97316;
+  --ds-secondary: #a73a00;
+  --ds-secondary-container: #fd651e;
+  --ds-tertiary: #006398;
+  --ds-tertiary-container: #00a2f4;
+
+  /* On-colors */
+  --ds-on-primary: #ffffff;
+  --ds-on-secondary: #ffffff;
+  --ds-on-tertiary: #ffffff;
+  --ds-on-surface: #141b2b;
+  --ds-on-surface-variant: #584237;
+}
+
+/* ─── Dark Mode ───────────────────────────────────────────────────────────── */
+.dark {
+  --background: #111827;
+  --foreground: #e8eaf6;
+  --card: #1a2235;
+  --card-foreground: #e8eaf6;
+  --popover: #1a2235;
+  --popover-foreground: #e8eaf6;
+  --primary: #f97316;
+  --primary-foreground: #1a0a00;
+  --secondary: #1e2a3a;
+  --secondary-foreground: #e8eaf6;
+  --muted: #1e2a3a;
+  --muted-foreground: #8896aa;
+  --accent: #1e2a3a;
+  --accent-foreground: #e8eaf6;
+  --destructive: #ff5449;
+  --border: rgba(255, 255, 255, 0.08);
+  --input: rgba(255, 255, 255, 0.1);
+  --ring: #f97316;
+
+  /* Sidebar dark */
+  --sidebar: #1a2235;
+  --sidebar-foreground: #e8eaf6;
+  --sidebar-primary: #f97316;
+  --sidebar-primary-foreground: #1a0a00;
+  --sidebar-accent: #1e2a3a;
+  --sidebar-accent-foreground: #e8eaf6;
+  --sidebar-border: rgba(255, 255, 255, 0.05);
+  --sidebar-ring: #f97316;
+
+  /* Surface hierarchy dark */
+  --ds-surface: #111827;
+  --ds-surface-container-lowest: #0d1420;
+  --ds-surface-container-low: #1a2235;
+  --ds-surface-container: #1e2a3a;
+  --ds-surface-container-high: #243040;
+  --ds-surface-container-highest: #2a3848;
+  --ds-surface-variant: #2c3651;
+
+  /* Brand dark (slightly lighter for legibility) */
+  --ds-primary: #f97316;
+  --ds-primary-container: #9d4300;
+  --ds-secondary: #fd651e;
+  --ds-secondary-container: #a73a00;
+  --ds-tertiary: #00a2f4;
+  --ds-tertiary-container: #006398;
+
+  /* On-colors dark */
+  --ds-on-primary: #1a0a00;
+  --ds-on-secondary: #1a0a00;
+  --ds-on-tertiary: #001f33;
+  --ds-on-surface: #e8eaf6;
+  --ds-on-surface-variant: #b0b8cc;
+}
+
+/* ─── Base Layer ──────────────────────────────────────────────────────────── */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans h-full;
+  }
+
+  body {
+    @apply bg-background text-foreground min-h-full;
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Manrope", system-ui, sans-serif;
+    font-weight: 700;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--ds-surface-container-high);
+    border-radius: 999px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--ds-surface-container-highest);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ─── Custom Utilities ────────────────────────────────────────────────────── */
+@layer utilities {
+
+  /* Glass morphism — floating elements only */
+  .glass {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  .dark .glass {
+    background: rgba(26, 34, 53, 0.7);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Ambient modal shadow */
+  .shadow-ambient {
+    box-shadow: 0 20px 60px rgba(20, 27, 43, 0.06),
+      0 4px 20px rgba(20, 27, 43, 0.04);
+  }
+
+  /* Ghost border fallback (15% opacity — design system rule) */
+  .border-ghost {
+    border: 1px solid rgba(220, 226, 247, 0.15);
+  }
+
+  /* Heading font */
+  .font-heading {
+    font-family: "Manrope", system-ui, sans-serif;
+  }
+
+  /* Smooth transitions */
+  .transition-smooth {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
 }
