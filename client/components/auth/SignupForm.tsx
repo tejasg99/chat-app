@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 import { Eye, EyeOff, Loader2, MessageCircle } from "lucide-react";
+import { z } from "zod";
 
-import { signupSchema, SignupFormData } from "@/validations";
+import { signupSchema } from "@/validations";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores/authStore";
 import { ApiResponse, IUser, TokenPair } from "@/types";
@@ -24,20 +25,38 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
+// ─── Extended schema (client-side only) ───────────────────────────────────────
+// confirmPassword is validated here but never sent to the API.
+const signupFormSchema = signupSchema
+  .extend({
+    confirmPassword: z.string().min(1, "Please confirm your password"),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type SignupFormData = z.infer<typeof signupFormSchema>;
+
 export function SignupForm() {
   const router = useRouter();
   const { setUser, setAccessToken } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const form = useForm<SignupFormData>({
-    resolver: zodResolver(signupSchema),
-    defaultValues: { name: "", email: "", password: "" },
+    resolver: zodResolver(signupFormSchema),
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
   const { isSubmitting } = form.formState;
 
   async function onSubmit(values: SignupFormData) {
     try {
+
+      // Strip confirmPassword — backend doesn't accept it
+      const { confirmPassword: _, ...payload } = values;
+
       const { data } = await api.post<
         ApiResponse<{ user: IUser; tokens: TokenPair }>
       >("/auth/signup", values);
@@ -189,6 +208,60 @@ export function SignupForm() {
                       }
                     >
                       {showPassword ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs text-destructive" />
+              </FormItem>
+            )}
+          />
+
+          {/* Confirm Password */}
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem className="space-y-1.5">
+                <Label className="text-sm font-medium text-foreground">
+                  Confirm password
+                </Label>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Re-enter your password"
+                      autoComplete="new-password"
+                      className="
+                        h-12 px-4 pr-12
+                        bg-surface-container-highest
+                        border-0
+                        rounded-xl
+                        text-foreground
+                        placeholder:text-muted-foreground
+                        focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-0
+                        transition-smooth
+                      "
+                      {...field}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((p) => !p)}
+                      className="
+                        absolute right-4 top-1/2 -translate-y-1/2
+                        text-muted-foreground hover:text-foreground
+                        transition-smooth
+                      "
+                      aria-label={
+                        showConfirmPassword
+                          ? "Hide confirm password"
+                          : "Show confirm password"
+                      }
+                    >
+                      {showConfirmPassword ? (
                         <EyeOff className="w-4 h-4" />
                       ) : (
                         <Eye className="w-4 h-4" />

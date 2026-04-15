@@ -17,9 +17,10 @@ interface PresenceState {
   setInitialPresence: (userIds: string[]) => void;
   addTyping: (chatId: string, userId: string, name: string) => void;
   removeTyping: (chatId: string, userId: string) => void;
+  isOnline: (userId: string) => boolean;
 }
 
-export const usePresenceStore = create<PresenceState>()((set) => ({
+export const usePresenceStore = create<PresenceState>()((set, get) => ({
   onlineUsers: new Set(),
   typingUsers: {},
 
@@ -60,4 +61,6 @@ export const usePresenceStore = create<PresenceState>()((set) => ({
         ),
       },
     })),
+
+  isOnline: (userId) => get().onlineUsers.has(userId),
 }));
