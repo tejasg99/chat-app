@@ -16,35 +16,17 @@ export function TypingIndicator({ names }: TypingIndicatorProps) {
 
   return (
     <div className="flex items-center gap-2.5 px-4 py-1.5">
-      {/* Animated dots */}
+      {/* Animated bounce dots */}
       <div className="flex items-center gap-1 h-5">
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="block w-1.5 h-1.5 rounded-full bg-muted-foreground opacity-60"
-            style={{
-              animation: "typing-bounce 1.2s ease-in-out infinite",
-              animationDelay: `${i * 0.2}s`,
-            }}
+            className="block w-1.5 h-1.5 rounded-full bg-muted-foreground opacity-60 animate-bounce"
+            style={{ animationDelay: `${i * 0.15}s` }}
           />
         ))}
       </div>
       <span className="text-xs text-muted-foreground">{label}</span>
-
-      <style jsx>{`
-        @keyframes typing-bounce {
-          0%,
-          60%,
-          100% {
-            transform: translateY(0);
-            opacity: 0.4;
-          }
-          30% {
-            transform: translateY(-4px);
-            opacity: 1;
-          }
-        }
-      `}</style>
     </div>
   );
 }
