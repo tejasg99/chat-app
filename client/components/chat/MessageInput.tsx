@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
-import { Send, X, ImageIcon } from "lucide-react";
+import { Send, ImageIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { IMessage } from "@/types";
 import { getSocket } from "@/lib/socket";
@@ -10,6 +10,7 @@ import api from "@/lib/axios";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { ReplyPreview } from "./ReplyPreview";
 
 interface MessageInputProps {
   chatId: string;
@@ -50,7 +51,7 @@ export function MessageInput({
     }
   }, [content, chatId, replyTo, onClearReply, stopTyping]);
 
-  // ── Handle Enter key ──────────────────────────────────────────────────────
+  // ── Enter to send, Shift+Enter for newline ────────────────────────────────
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -62,8 +63,6 @@ export function MessageInput({
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setContent(e.target.value);
     onTypingInput();
-
-    // Auto-resize
     const el = e.target;
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
@@ -89,56 +88,30 @@ export function MessageInput({
     try {
       const formData = new FormData();
       formData.append("image", file);
-
       await api.post(`/chats/${chatId}/messages/image`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      // Backend broadcasts via socket — no need to manually append
+      // Backend broadcasts via socket — no manual append needed
     } catch {
       toast.error("Failed to upload image.");
     } finally {
       setIsUploadingImage(false);
-      // Reset file input
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   }
 
   return (
     <div className="shrink-0 px-4 pb-4 pt-2">
-      {/* Reply preview banner */}
+      {/* Reply preview — uses ReplyPreview with onClose */}
       {replyTo && (
-        <div
-          className="
-            flex items-start gap-3 px-3 py-2 mb-2
-            bg-surface-container rounded-xl
-            border-l-2 border-brand-primary
-          "
-        >
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-semibold text-brand-primary mb-0.5">
-              Replying to {replyTo.sender.name}
-            </p>
-            <p className="text-xs text-muted-foreground truncate">
-              {replyTo.isDeleted
-                ? "Message deleted"
-                : replyTo.type === "image"
-                  ? "📷 Image"
-                  : replyTo.content}
-            </p>
-          </div>
-          <button
-            onClick={onClearReply}
-            className="
-              w-5 h-5 rounded-full
-              bg-surface-container-high
-              hover:bg-surface-container-highest
-              flex items-center justify-center
-              shrink-0 mt-0.5 transition-smooth
-            "
-            aria-label="Cancel reply"
-          >
-            <X className="w-3 h-3 text-muted-foreground" />
-          </button>
+        <div className="mb-2">
+          <ReplyPreview
+            senderName={replyTo.sender.name}
+            content={replyTo.content}
+            messageType={replyTo.type}
+            isDeleted={replyTo.isDeleted}
+            onClose={onClearReply}
+          />
         </div>
       )}
 
@@ -150,7 +123,7 @@ export function MessageInput({
           rounded-2xl px-3 py-2
         "
       >
-        {/* Image upload button */}
+        {/* Image upload */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
@@ -200,8 +173,7 @@ export function MessageInput({
           className="
             w-8 h-8 rounded-full shrink-0 mb-0.5
             bg-brand-primary hover:bg-brand-secondary-container
-            text-on-primary
-            transition-smooth
+            text-on-primary transition-smooth
             disabled:opacity-40
           "
           aria-label="Send message"

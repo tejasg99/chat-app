@@ -4,10 +4,14 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { Trash2, Reply, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { IMessage, IReaction } from "@/types";
+
+import { IMessage } from "@/types";
 import { useAuthStore } from "@/stores/authStore";
 import { getSocket } from "@/lib/socket";
 import { UserAvatar } from "@/components/user/UserAvatar";
+import { ReplyPreview } from "./ReplyPreview";
+import { ReactionPicker } from "./ReactionPicker";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,9 +27,6 @@ interface MessageBubbleProps {
   onReply: (message: IMessage) => void;
   onReact: (messageId: string, emoji: string) => void;
 }
-
-// Common reaction emojis
-const QUICK_REACTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
 export function MessageBubble({
   message,
@@ -106,25 +107,15 @@ export function MessageBubble({
           </span>
         )}
 
-        {/* Reply preview banner */}
+        {/* Reply banner — uses ReplyPreview, no close button here */}
         {message.replyTo && !isDeleted && (
-          <div
-            className={cn(
-              "flex flex-col px-3 py-1.5 mb-1 rounded-xl max-w-full",
-              "bg-surface-container-high border-l-2 border-brand-primary",
-              "opacity-80",
-            )}
-          >
-            <span className="text-[10px] font-semibold text-brand-primary mb-0.5">
-              {message.replyTo.sender.name}
-            </span>
-            <span className="text-xs text-on-surface-variant truncate">
-              {message.replyTo.isDeleted
-                ? "Message deleted"
-                : message.replyTo.type === "image"
-                  ? "📷 Image"
-                  : message.replyTo.content}
-            </span>
+          <div className="mb-1 max-w-full">
+            <ReplyPreview
+              senderName={message.replyTo.sender.name}
+              content={message.replyTo.content}
+              messageType={message.replyTo.type}
+              isDeleted={message.replyTo.isDeleted}
+            />
           </div>
         )}
 
@@ -135,53 +126,21 @@ export function MessageBubble({
             isOwn ? "flex-row-reverse" : "flex-row",
           )}
         >
-          {/* Action buttons (hover) */}
+          {/* Action buttons visible on hover*/}
           <div
             className={cn(
               "flex items-center gap-1 mb-1 transition-smooth",
               showActions ? "opacity-100" : "opacity-0 pointer-events-none",
             )}
           >
-            {/* Quick react button */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="
-                    w-7 h-7 rounded-full
-                    bg-surface-container-low
-                    hover:bg-surface-container
-                    flex items-center justify-center
-                    transition-smooth text-muted-foreground
-                  "
-                  aria-label="React"
-                >
-                  <span className="text-xs">😊</span>
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                className="
-                  flex flex-row gap-0.5 p-1.5
-                  bg-surface-container-lowest
-                  border-0 shadow-ambient
-                  rounded-2xl min-w-0
-                "
-              >
-                {QUICK_REACTIONS.map((emoji) => (
-                  <button
-                    key={emoji}
-                    onClick={() => onReact(message._id, emoji)}
-                    className="
-                      w-8 h-8 rounded-xl
-                      hover:bg-surface-container-low
-                      flex items-center justify-center
-                      text-base transition-smooth
-                    "
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {/* Reaction picker */}
+            {!isDeleted && (
+              <ReactionPicker
+                onReact={(emoji) => onReact(message._id, emoji)}
+                side="top"
+                align={isOwn ? "end" : "start"}
+              />
+            )}
 
             {/* Reply button */}
             {!isDeleted && (
@@ -295,7 +254,7 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Timestamp + read receipt */}
+        {/* Timestamp  */}
         <div
           className={cn(
             "flex items-center gap-1.5 mt-1 px-1",
