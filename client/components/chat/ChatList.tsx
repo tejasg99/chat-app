@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Users, MessageCircle, Search } from "lucide-react";
+import { Plus, Users, MessageCircle, Search, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import api from "@/lib/axios";
@@ -13,16 +13,17 @@ import { ChatListItem } from "./ChatListItem";
 import { UserAvatar } from "@/components/user/UserAvatar";
 import { NewDirectChatModal } from "@/components/modals/NewDirectChatModal";
 import { NewGroupChatModal } from "@/components/modals/NewGroupChatModal";
+import { EditProfileModal } from "@/components/user/EditProfileModal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
 
 export function ChatList() {
   const { user, logout } = useAuth();
@@ -30,6 +31,7 @@ export function ChatList() {
   const [search, setSearch] = useState("");
   const [showDirectModal, setShowDirectModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [showEditProfile, setShowEditProfile] = useState(false);
 
   // ── Fetch all chats on mount ──────────────────────────────────────────────
   const { data, isLoading, error } = useQuery({
@@ -71,7 +73,7 @@ export function ChatList() {
     try {
       await api.post("/auth/logout");
     } catch {
-      // ignore — clear store regardless
+      // ignore
     } finally {
       logout();
       window.location.href = "/login";
@@ -80,7 +82,6 @@ export function ChatList() {
 
   return (
     <>
-      {/* ── Sidebar container ── */}
       <aside
         className="
           flex flex-col h-full
@@ -107,8 +108,7 @@ export function ChatList() {
                 className="
                   h-8 w-8 rounded-full
                   bg-brand-primary hover:bg-brand-secondary-container
-                  text-on-primary
-                  transition-smooth
+                  text-on-primary transition-smooth
                 "
                 aria-label="New chat"
               >
@@ -168,8 +168,7 @@ export function ChatList() {
               className="
                 h-9 pl-9 pr-4
                 bg-surface-container
-                border-0
-                rounded-xl
+                border-0 rounded-xl
                 text-sm text-foreground
                 placeholder:text-muted-foreground
                 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0
@@ -182,7 +181,6 @@ export function ChatList() {
         {/* ── Chat list ── */}
         <div className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-4">
           {isLoading ? (
-            // Loading skeletons
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="flex items-center gap-3 px-4 py-3">
                 <Skeleton className="h-10 w-10 rounded-full bg-surface-container" />
@@ -193,16 +191,8 @@ export function ChatList() {
               </div>
             ))
           ) : filtered.length === 0 ? (
-            // Empty state
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div
-                className="
-                  w-14 h-14 rounded-2xl
-                  bg-surface-container
-                  flex items-center justify-center
-                  mb-4
-                "
-              >
+              <div className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center mb-4">
                 <MessageCircle className="w-6 h-6 text-muted-foreground" />
               </div>
               <p className="text-sm font-medium text-foreground mb-1">
@@ -220,21 +210,14 @@ export function ChatList() {
         </div>
 
         {/* ── User footer ── */}
-        <div
-          className={cn(
-            "px-4 py-4 mt-auto",
-            "border-t-0", // no dividers — design spec
-          )}
-        >
+        <div className="px-4 py-4 mt-auto">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
                 className="
                   w-full flex items-center gap-3 px-3 py-2.5
-                  rounded-xl
-                  hover:bg-surface-container
-                  transition-smooth
-                  text-left
+                  rounded-xl hover:bg-surface-container
+                  transition-smooth text-left
                 "
               >
                 {user && (
@@ -252,6 +235,7 @@ export function ChatList() {
                         {user.email}
                       </p>
                     </div>
+                    <Settings className="w-4 h-4 text-muted-foreground shrink-0" />
                   </>
                 )}
               </button>
@@ -260,12 +244,27 @@ export function ChatList() {
               align="end"
               side="top"
               className="
-                w-48
+                w-52
                 bg-surface-container-lowest
                 border-0 shadow-ambient
                 rounded-xl mb-1
               "
             >
+              <DropdownMenuItem
+                onClick={() => setShowEditProfile(true)}
+                className="
+                  gap-2.5 px-3 py-2.5 rounded-lg
+                  text-sm text-foreground
+                  hover:bg-surface-container-low
+                  cursor-pointer
+                "
+              >
+                <Settings className="w-4 h-4 text-muted-foreground" />
+                Edit profile
+              </DropdownMenuItem>
+
+              <DropdownMenuSeparator className="bg-surface-container-high mx-2" />
+
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="
@@ -290,6 +289,10 @@ export function ChatList() {
       <NewGroupChatModal
         open={showGroupModal}
         onOpenChange={setShowGroupModal}
+      />
+      <EditProfileModal
+        open={showEditProfile}
+        onOpenChange={setShowEditProfile}
       />
     </>
   );

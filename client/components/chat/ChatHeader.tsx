@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Users, UserPlus, LogOut, MoreVertical } from "lucide-react";
+import {
+  ArrowLeft,
+  Users,
+  UserPlus,
+  LogOut,
+  MoreVertical,
+  Info,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -14,6 +21,8 @@ import { useChatStore } from "@/stores/chatStore";
 import api from "@/lib/axios";
 import { UserAvatar } from "@/components/user/UserAvatar";
 import { AddMembersModal } from "@/components/modals/AddMembersModal";
+import { ProfilePanel } from "@/components/user/ProfilePanel";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +63,10 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
 
   const [showAddMembers, setShowAddMembers] = useState(false);
   const [showMembersSheet, setShowMembersSheet] = useState(false);
+  const [showProfilePanel, setShowProfilePanel] = useState(false);
+  const [profilePanelUserId, setProfilePanelUserId] = useState<string | null>(
+    null,
+  );
   const [leavingGroup, setLeavingGroup] = useState(false);
 
   const { name, avatar, otherMember } = getHeaderInfo(
@@ -66,6 +79,14 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
   );
 
   const isAdmin = currentUser ? chat.admins.includes(currentUser._id) : false;
+
+  // ── Open profile panel ────────────────────────────────────────────────────
+  function openProfile(userId: string) {
+    setProfilePanelUserId(userId);
+    setShowProfilePanel(true);
+    // Close members sheet if open
+    setShowMembersSheet(false);
+  }
 
   // ── Leave group ───────────────────────────────────────────────────────────
   async function handleLeaveGroup() {
@@ -112,19 +133,42 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
           <ArrowLeft className="w-4 h-4" />
         </button>
 
-        {/* Avatar */}
-        <UserAvatar
-          name={name}
-          avatar={avatar}
-          isOnline={chat.type === "direct" ? isOnline : false}
-          size="md"
-        />
+        {/* Clickable avatar — opens profile / members sheet */}
+        <button
+          onClick={() => {
+            if (chat.type === "direct" && otherMember) {
+              openProfile(otherMember._id);
+            } else {
+              setShowMembersSheet(true);
+            }
+          }}
+          className="shrink-0 rounded-full transition-smooth hover:opacity-80"
+          aria-label="View profile"
+        >
+          <UserAvatar
+            name={name}
+            avatar={avatar}
+            isOnline={chat.type === "direct" ? isOnline : false}
+            size="md"
+          />
+        </button>
 
         {/* Name + subtitle */}
         <div className="flex-1 min-w-0">
-          <h2 className="font-heading text-sm font-bold text-foreground truncate">
-            {name}
-          </h2>
+          <button
+            onClick={() => {
+              if (chat.type === "direct" && otherMember) {
+                openProfile(otherMember._id);
+              } else {
+                setShowMembersSheet(true);
+              }
+            }}
+            className="text-left w-full"
+          >
+            <h2 className="font-heading text-sm font-bold text-foreground truncate hover:text-brand-primary transition-smooth">
+              {name}
+            </h2>
+          </button>
           <p className="text-xs text-muted-foreground truncate">
             {chat.type === "group" ? (
               <button
@@ -172,7 +216,25 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
               rounded-xl
             "
           >
-            {/* Group-only actions */}
+            {/* Direct chat actions */}
+            {chat.type === "direct" && otherMember && (
+              <>
+                <DropdownMenuItem
+                  onClick={() => openProfile(otherMember._id)}
+                  className="
+                    gap-2.5 px-3 py-2.5 rounded-lg
+                    text-sm text-foreground
+                    hover:bg-surface-container-low
+                    cursor-pointer
+                  "
+                >
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                  View profile
+                </DropdownMenuItem>
+              </>
+            )}
+
+            {/* Group chat actions */}
             {chat.type === "group" && (
               <>
                 <DropdownMenuItem
@@ -224,7 +286,7 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
         </DropdownMenu>
       </header>
 
-      {/* ── Members sheet (group chats) ── */}
+      {/* ── Members sheet (group) ── */}
       {chat.type === "group" && (
         <Sheet open={showMembersSheet} onOpenChange={setShowMembersSheet}>
           <SheetContent
@@ -248,11 +310,13 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
                 const isSelf = member._id === currentUser?._id;
 
                 return (
-                  <div
+                  <button
                     key={member._id}
+                    onClick={() => openProfile(member._id)}
                     className="
-                      flex items-center gap-3 px-3 py-2.5
-                      rounded-xl
+                      w-full flex items-center gap-3 px-3 py-2.5
+                      rounded-xl hover:bg-surface-container-low
+                      transition-smooth text-left
                     "
                   >
                     <UserAvatar
@@ -277,18 +341,36 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
                     {memberIsAdmin && (
                       <span
                         className="
-                          text-[10px] font-bold px-2 py-0.5 rounded-full
+                          text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0
                           bg-brand-primary text-on-primary
-                          shrink-0
                         "
                       >
                         Admin
                       </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
+          </SheetContent>
+        </Sheet>
+      )}
+
+      {/* ── Profile panel ── */}
+      {showProfilePanel && profilePanelUserId && (
+        <Sheet open={showProfilePanel} onOpenChange={setShowProfilePanel}>
+          <SheetContent
+            side="right"
+            className="
+              w-80 p-0
+              bg-surface-container-lowest
+              border-0 shadow-ambient
+            "
+          >
+            <ProfilePanel
+              userId={profilePanelUserId}
+              onClose={() => setShowProfilePanel(false)}
+            />
           </SheetContent>
         </Sheet>
       )}
