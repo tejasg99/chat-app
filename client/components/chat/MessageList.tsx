@@ -9,10 +9,12 @@ import { useMessages } from "@/hooks/useMessages";
 import { IMessage } from "@/types";
 import { MessageBubble } from "./MessageBubble";
 import { InfiniteScrollTrigger } from "@/components/shared/InfiniteScrollTrigger";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MessageListSkeleton } from "@/components/skeletons/MessageListSkeleton";
+import { EmptyMessages } from "@/components/empty-states/EmptyMessages";
 
 interface MessageListProps {
   chatId: string;
+  chatName: string;
   onReply: (message: IMessage) => void;
   onReact: (messageId: string, emoji: string) => void;
 }
@@ -32,7 +34,12 @@ function shouldGroup(
   return diff < GROUP_THRESHOLD_MS;
 }
 
-export function MessageList({ chatId, onReply, onReact }: MessageListProps) {
+export function MessageList({
+  chatId,
+  chatName,
+  onReply,
+  onReact,
+}: MessageListProps) {
   const messages = useMessageStore((s) => s.messages[chatId] ?? []);
   const { isLoading, isFetchingOlder, hasMore, loadOlder } =
     useMessages(chatId);
@@ -89,37 +96,15 @@ export function MessageList({ chatId, onReply, onReact }: MessageListProps) {
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className={cn(
-              "flex gap-2.5",
-              i % 3 === 0 ? "flex-row-reverse" : "flex-row",
-            )}
-          >
-            <Skeleton className="w-8 h-8 rounded-full shrink-0 bg-surface-container" />
-            <Skeleton
-              className={cn(
-                "h-10 rounded-[20px] bg-surface-container",
-                i % 3 === 0 ? "w-48" : "w-64",
-              )}
-            />
-          </div>
-        ))}
+      <div className="flex-1 overflow-hidden">
+        <MessageListSkeleton count={8} />
       </div>
     );
   }
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (messages.length === 0) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          No messages yet. Say hello! 👋
-        </p>
-      </div>
-    );
+    return <EmptyMessages chatName={chatName} />;
   }
 
   return (

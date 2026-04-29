@@ -17,6 +17,12 @@ interface ChatWindowProps {
   chat: IChat;
 }
 
+function getChatDisplayName(chat: IChat, currentUserId: string): string {
+  if (chat.type === "group") return chat.name ?? "Group Chat";
+  const other = chat.members.find((m) => m._id !== currentUserId);
+  return other?.name ?? "Unknown";
+}
+
 export function ChatWindow({ chat }: ChatWindowProps) {
   const currentUser = useAuthStore((s) => s.user);
   const { handleReact } = useReactions(chat._id);
@@ -26,6 +32,8 @@ export function ChatWindow({ chat }: ChatWindowProps) {
   const [typingUsers, setTypingUsers] = useState<Map<string, string>>(
     new Map(),
   );
+
+  const chatName = getChatDisplayName(chat, currentUser?._id ?? "");
 
   // ── Join socket room + initial read receipt ───────────────────────────────
   useEffect(() => {
@@ -110,6 +118,7 @@ export function ChatWindow({ chat }: ChatWindowProps) {
       {/* Messages */}
       <MessageList
         chatId={chat._id}
+        chatName={chatName}
         onReply={setReplyTo}
         onReact={handleReact}
       />

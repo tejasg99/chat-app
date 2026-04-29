@@ -14,6 +14,8 @@ import { UserAvatar } from "@/components/user/UserAvatar";
 import { NewDirectChatModal } from "@/components/modals/NewDirectChatModal";
 import { NewGroupChatModal } from "@/components/modals/NewGroupChatModal";
 import { EditProfileModal } from "@/components/user/EditProfileModal";
+import { ChatListSkeleton } from "@/components/skeletons/ChatListSkeleton";
+import { EmptyChats } from "@/components/empty-states/EmptyChats";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +25,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export function ChatList() {
   const { user, logout } = useAuth();
@@ -80,6 +81,43 @@ export function ChatList() {
     }
   }
 
+  // ── Render list body ──────────────────────────────────────────────────────
+  function renderListBody() {
+    if (isLoading) {
+      return <ChatListSkeleton count={7} />;
+    }
+
+    // No chats at all (not a search result — actual empty state)
+    if (chats.length === 0 && !search) {
+      return <EmptyChats onNewChat={() => setShowDirectModal(true)} />;
+    }
+
+    // Search returned nothing
+    if (filtered.length === 0 && search) {
+      return (
+        <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-surface-container flex items-center justify-center mb-3">
+            <Search className="w-5 h-5 text-muted-foreground opacity-50" />
+          </div>
+          <p className="text-sm font-medium text-foreground mb-1">
+            No results for &ldquo;{search}&rdquo;
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Try a different name or keyword
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-0.5">
+        {filtered.map((chat) => (
+          <ChatListItem key={chat._id} chat={chat} />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <>
       <aside
@@ -89,8 +127,8 @@ export function ChatList() {
           bg-surface-container-low
         "
       >
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between px-5 pt-6 pb-4">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 pt-6 pb-4 shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-lg bg-brand-primary flex items-center justify-center">
               <MessageCircle className="w-3.5 h-3.5 text-on-primary" />
@@ -100,7 +138,6 @@ export function ChatList() {
             </span>
           </div>
 
-          {/* New chat button */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -120,17 +157,14 @@ export function ChatList() {
               className="
                 w-48
                 bg-surface-container-lowest
-                border-0 shadow-ambient
-                rounded-xl
+                border-0 shadow-ambient rounded-xl
               "
             >
               <DropdownMenuItem
                 onClick={() => setShowDirectModal(true)}
                 className="
-                  gap-2.5 px-3 py-2.5 rounded-lg
-                  text-sm text-foreground
-                  hover:bg-surface-container-low
-                  cursor-pointer
+                  gap-2.5 px-3 py-2.5 rounded-lg text-sm text-foreground
+                  hover:bg-surface-container-low cursor-pointer
                 "
               >
                 <MessageCircle className="w-4 h-4 text-muted-foreground" />
@@ -139,10 +173,8 @@ export function ChatList() {
               <DropdownMenuItem
                 onClick={() => setShowGroupModal(true)}
                 className="
-                  gap-2.5 px-3 py-2.5 rounded-lg
-                  text-sm text-foreground
-                  hover:bg-surface-container-low
-                  cursor-pointer
+                  gap-2.5 px-3 py-2.5 rounded-lg text-sm text-foreground
+                  hover:bg-surface-container-low cursor-pointer
                 "
               >
                 <Users className="w-4 h-4 text-muted-foreground" />
@@ -152,8 +184,8 @@ export function ChatList() {
           </DropdownMenu>
         </div>
 
-        {/* ── Search ── */}
-        <div className="px-4 pb-3">
+        {/* Search */}
+        <div className="px-4 pb-3 shrink-0">
           <div className="relative">
             <Search
               className="
@@ -167,8 +199,7 @@ export function ChatList() {
               placeholder="Search conversations…"
               className="
                 h-9 pl-9 pr-4
-                bg-surface-container
-                border-0 rounded-xl
+                bg-surface-container border-0 rounded-xl
                 text-sm text-foreground
                 placeholder:text-muted-foreground
                 focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-0
@@ -178,39 +209,13 @@ export function ChatList() {
           </div>
         </div>
 
-        {/* ── Chat list ── */}
-        <div className="flex-1 overflow-y-auto px-2 space-y-0.5 pb-4">
-          {isLoading ? (
-            Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 px-4 py-3">
-                <Skeleton className="h-10 w-10 rounded-full bg-surface-container" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-3.5 w-32 bg-surface-container" />
-                  <Skeleton className="h-3 w-48 bg-surface-container" />
-                </div>
-              </div>
-            ))
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-surface-container flex items-center justify-center mb-4">
-                <MessageCircle className="w-6 h-6 text-muted-foreground" />
-              </div>
-              <p className="text-sm font-medium text-foreground mb-1">
-                {search ? "No results found" : "No conversations yet"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {search
-                  ? "Try a different name or keyword"
-                  : "Start a new chat to get going"}
-              </p>
-            </div>
-          ) : (
-            filtered.map((chat) => <ChatListItem key={chat._id} chat={chat} />)
-          )}
+        {/* List body */}
+        <div className="flex-1 overflow-y-auto pb-4 px-2">
+          {renderListBody()}
         </div>
 
-        {/* ── User footer ── */}
-        <div className="px-4 py-4 mt-auto">
+        {/* User footer */}
+        <div className="px-4 py-4 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -244,34 +249,27 @@ export function ChatList() {
               align="end"
               side="top"
               className="
-                w-52
+                w-52 mb-1
                 bg-surface-container-lowest
-                border-0 shadow-ambient
-                rounded-xl mb-1
+                border-0 shadow-ambient rounded-xl
               "
             >
               <DropdownMenuItem
                 onClick={() => setShowEditProfile(true)}
                 className="
-                  gap-2.5 px-3 py-2.5 rounded-lg
-                  text-sm text-foreground
-                  hover:bg-surface-container-low
-                  cursor-pointer
+                  gap-2.5 px-3 py-2.5 rounded-lg text-sm text-foreground
+                  hover:bg-surface-container-low cursor-pointer
                 "
               >
                 <Settings className="w-4 h-4 text-muted-foreground" />
                 Edit profile
               </DropdownMenuItem>
-
               <DropdownMenuSeparator className="bg-surface-container-high mx-2" />
-
               <DropdownMenuItem
                 onClick={handleLogout}
                 className="
-                  px-3 py-2.5 rounded-lg
-                  text-sm text-destructive
-                  hover:bg-surface-container-low
-                  cursor-pointer
+                  px-3 py-2.5 rounded-lg text-sm text-destructive
+                  hover:bg-surface-container-low cursor-pointer
                 "
               >
                 Sign out
@@ -281,7 +279,6 @@ export function ChatList() {
         </div>
       </aside>
 
-      {/* ── Modals ── */}
       <NewDirectChatModal
         open={showDirectModal}
         onOpenChange={setShowDirectModal}
