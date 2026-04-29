@@ -11,6 +11,8 @@ import { useChatStore } from "@/stores/chatStore";
 import { useMessageStore } from "@/stores/messageStore";
 import { usePresenceStore } from "@/stores/presenceStore";
 import { ApiResponse, IUser } from "@/types";
+import { ProtectedRoute } from "@/components/shared/ProtectedRoute";
+import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 
 export default function MainLayout({
   children,
@@ -50,9 +52,7 @@ export default function MainLayout({
 
     const socket = getSocket();
 
-    if (!socket.connected) {
-      socket.connect();
-    }
+    if (!socket.connected) socket.connect();
 
     // ── Incoming message ──────────────────────────────────────────────────
     socket.on("message:new", (message) => {
@@ -131,8 +131,12 @@ export default function MainLayout({
   ]);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-background">
-      {children}
-    </div>
+    <ProtectedRoute>
+      <ErrorBoundary>
+        <div className="h-screen flex overflow-hidden bg-background">
+          {children}
+        </div>
+      </ErrorBoundary>
+    </ProtectedRoute>
   );
 }
