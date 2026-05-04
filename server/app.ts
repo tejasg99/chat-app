@@ -12,9 +12,19 @@ const app = express();
 
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet());
+
+// Build allowed origins list from CLIENT_URL + optional MOBILE_ORIGINS (comma-separated)
+const allowedOrigins: (string | RegExp)[] = [env.clientUrl];
+if (env.mobileOrigins) {
+  env.mobileOrigins.split(",").forEach((o) => {
+    const trimmed = o.trim();
+    if (trimmed) allowedOrigins.push(trimmed);
+  });
+}
+
 app.use(
   cors({
-    origin: env.clientUrl,
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],

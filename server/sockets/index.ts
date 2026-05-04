@@ -19,11 +19,20 @@ import type {
 export const initSocket = async (
   httpServer: HttpServer,
 ): Promise<Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>> => {
+  // Build allowed origins list from CLIENT_URL + optional MOBILE_ORIGINS
+  const allowedOrigins: string[] = [env.clientUrl];
+  if (env.mobileOrigins) {
+    env.mobileOrigins.split(",").forEach((o) => {
+      const trimmed = o.trim();
+      if (trimmed) allowedOrigins.push(trimmed);
+    });
+  }
+
   const io = new Server<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>(
     httpServer,
     {
       cors: {
-        origin: env.clientUrl,
+        origin: allowedOrigins,
         methods: ["GET", "POST"],
         credentials: true,
       },

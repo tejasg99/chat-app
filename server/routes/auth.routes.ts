@@ -17,13 +17,17 @@ router.post("/login", authRateLimiter, login);
 router.post("/refresh-token", refreshToken);
 router.post("/logout", protect, logout);
 
-// Google OAuth
+// Google OAuth — ?platform=mobile triggers deep-link callback for native app
 router.get(
   "/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email"],
-    session: false,
-  }),
+  (req, res, next) => {
+    const platform = req.query.platform === "mobile" ? "mobile" : "web";
+    passport.authenticate("google", {
+      scope: ["profile", "email"],
+      session: false,
+      state: platform,
+    })(req, res, next);
+  },
 );
 
 router.get(

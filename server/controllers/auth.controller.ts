@@ -38,6 +38,7 @@ export const signup = asyncHandler(async (req: Request, res: Response) => {
       createApiResponse(201, "Account created successfully", {
         user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
         accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       }),
     );
 });
@@ -63,6 +64,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       createApiResponse(200, "Login successful", {
         user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
         accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       }),
     );
 });
@@ -84,7 +86,10 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
       maxAge: 7 * 24 * 60 * 60 * 1000,
     })
     .status(200)
-    .json(createApiResponse(200, "Tokens refreshed", { accessToken: tokens.accessToken }));
+    .json(createApiResponse(200, "Tokens refreshed", {
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    }));
 });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
@@ -109,6 +114,7 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
 
   if (!result?.tokens) throw new ApiError(401, "Google authentication failed");
 
+  // Set cookies (for web client)
   res
     .cookie("accessToken", result.tokens.accessToken, {
       ...cookieOptions,
@@ -117,6 +123,17 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
     .cookie("refreshToken", result.tokens.refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .redirect(`${env.clientUrl}/auth/success`);
+    });
+
+  // Mobile clients pass ?platform=mobile via OAuth state param
+  const platform = req.query.state === "mobile" ? "mobile" : "web";
+
+  if (platform === "mobile") {
+    // Redirect to the native app deep link with tokens as query params
+    const deepLink = `chatapp://auth/success?accessToken=${encodeURIComponent(result.tokens.accessToken)}&refreshToken=${encodeURIComponent(result.tokens.refreshToken)}`;
+    return res.redirect(deepLink);
+  }
+
+  // Default: redirect to web client
+  res.redirect(`${env.clientUrl}/auth/success`);
 });

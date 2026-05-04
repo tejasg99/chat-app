@@ -24,6 +24,7 @@ export const env = {
   googleCallbackUrl: getEnv("GOOGLE_CALLBACK_URL"),
 
   clientUrl: getEnv("CLIENT_URL", "http://localhost:3000"),
+  mobileOrigins: getEnv("MOBILE_ORIGINS", ""),
 
   redisUrl: getEnv("REDIS_URL"),
   redisToken: getEnv("REDIS_TOKEN", ""),
