@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useMemo } from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +40,12 @@ export function MessageList({
   onReply,
   onReact,
 }: MessageListProps) {
-  const messages = useMessageStore((s) => s.messages[chatId] ?? []);
+  const messagesMap = useMessageStore((s) => s.messages);
+  const messages = useMemo<IMessage[]>(
+    () => messagesMap[chatId] ?? [],
+    [messagesMap, chatId],
+  );
+
   const { isLoading, isFetchingOlder, hasMore, loadOlder } =
     useMessages(chatId);
 

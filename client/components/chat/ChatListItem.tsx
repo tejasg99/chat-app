@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { cn } from "@/lib/utils";
-import { IChat, IUser } from "@/types";
+import { IChat, IUser, IMessage } from "@/types";
 import { UserAvatar } from "@/components/user/UserAvatar";
 import { useAuthStore } from "@/stores/authStore";
 import { usePresenceStore } from "@/stores/presenceStore";
@@ -35,7 +36,11 @@ export function ChatListItem({ chat }: ChatListItemProps) {
   const activeChat = useChatStore((s) => s.activeChat);
   const setActiveChat = useChatStore((s) => s.setActiveChat);
   const isOnline = usePresenceStore((s) => s.isOnline);
-  const messages = useMessageStore((s) => s.messages[chat._id] ?? []);
+  const messagesMap = useMessageStore((s) => s.messages);
+  const messages = useMemo<IMessage[]>(
+    () => messagesMap[chat._id] ?? [],
+    [messagesMap, chat._id]
+  );
 
   if (!currentUser) return null;
 
