@@ -8,7 +8,7 @@ import {
 import {
   createReportSchema,
   updateReportStatusSchema,
-  paginationSchema,
+  offsetPaginationSchema as paginationSchema,
 } from "../validations/chat.validation.ts";
 import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
