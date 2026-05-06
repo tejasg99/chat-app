@@ -12,7 +12,7 @@ import { z } from "zod";
 import { signupSchema } from "@/validations";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores/authStore";
-import { ApiResponse, IUser, TokenPair } from "@/types";
+import { ApiResponse, IUser } from "@/types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,12 +58,12 @@ export function SignupForm() {
       const { confirmPassword: _, ...payload } = values;
 
       const { data } = await api.post<
-        ApiResponse<{ user: IUser; tokens: TokenPair }>
+        ApiResponse<{ user: IUser; accessToken: string }>
       >("/auth/signup", values);
 
       if (!data.data) throw new Error(data.message);
 
-      setAccessToken(data.data.tokens.accessToken);
+      setAccessToken(data.data.accessToken);
       setUser(data.data.user);
       toast.success(`Account created! Welcome, ${data.data.user.name}!`);
       router.push("/chats");

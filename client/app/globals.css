@@ -133,10 +133,10 @@
   --ds-surface-variant: #dce2f7;
 
   /* Brand */
-  --ds-primary: #9d4300;
-  --ds-primary-container: #f97316;
-  --ds-secondary: #a73a00;
-  --ds-secondary-container: #fd651e;
+  --ds-primary: #f97316;
+  --ds-primary-container: #9d4300;
+  --ds-secondary: #fd651e;
+  --ds-secondary-container: #a73a00;
   --ds-tertiary: #006398;
   --ds-tertiary-container: #00a2f4;
 

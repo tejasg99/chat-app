@@ -11,7 +11,7 @@ import { Eye, EyeOff, Loader2, MessageCircle } from "lucide-react";
 import { loginSchema, LoginFormData } from "@/validations";
 import api from "@/lib/axios";
 import { useAuthStore } from "@/stores/authStore";
-import { ApiResponse, IUser, TokenPair } from "@/types";
+import { ApiResponse, IUser } from "@/types";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,12 +39,12 @@ export function LoginForm() {
   async function onSubmit(values: LoginFormData) {
     try {
       const { data } = await api.post<
-        ApiResponse<{ user: IUser; tokens: TokenPair }>
+        ApiResponse<{ user: IUser; accessToken: string }>
       >("/auth/login", values);
 
       if (!data.data) throw new Error(data.message);
 
-      setAccessToken(data.data.tokens.accessToken);
+      setAccessToken(data.data.accessToken);
       setUser(data.data.user);
       toast.success(`Welcome back, ${data.data.user.name}!`);
       router.push("/chats");
