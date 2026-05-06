@@ -14,15 +14,25 @@ import { env } from "../config/env.ts";
 const cookieOptions = {
   httpOnly: true,
   secure: env.nodeEnv === "production",
-  sameSite: "strict" as const,
+  sameSite: "lax" as const,
+};
+
+// Detect native clients
+const isMobileClient = (req: Request) => {
+  return req.headers["x-client-type"] === "mobile";
 };
 
 // ─── Signup ───────────────────────────────────────────────────────────────────
 export const signup = asyncHandler(async (req: Request, res: Response) => {
   const parsed = signupSchema.safeParse(req.body);
-  if (!parsed.success) throw parsed.error;
+
+  if (!parsed.success) {
+    throw parsed.error;
+  }
 
   const { user, tokens } = await signupService(parsed.data);
+
+  const mobileClient = isMobileClient(req);
 
   res
     .cookie("accessToken", tokens.accessToken, {
@@ -32,23 +42,35 @@ export const signup = asyncHandler(async (req: Request, res: Response) => {
     .cookie("refreshToken", tokens.refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .status(201)
-    .json(
-      createApiResponse(201, "Account created successfully", {
-        user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      }),
-    );
+    });
+
+  const responseData: Record<string, unknown> = {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+    },
+    accessToken: tokens.accessToken,
+  };
+
+  // Only expose refresh token to mobile apps
+  if (mobileClient) {
+    responseData.refreshToken = tokens.refreshToken;
+  }
+
+  res.status(201).json(createApiResponse(201, "Account created successfully", responseData));
 });
 
 // ─── Login ────────────────────────────────────────────────────────────────────
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const parsed = loginSchema.safeParse(req.body);
+
   if (!parsed.success) throw parsed.error;
 
   const { user, tokens } = await loginService(parsed.data);
+
+  const mobileClient = isMobileClient(req);
 
   res
     .cookie("accessToken", tokens.accessToken, {
@@ -58,23 +80,35 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     .cookie("refreshToken", tokens.refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .status(200)
-    .json(
-      createApiResponse(200, "Login successful", {
-        user: { id: user._id, name: user.name, email: user.email, avatar: user.avatar },
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
-      }),
-    );
+    });
+
+  const responseData: Record<string, unknown> = {
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      avatar: user.avatar,
+    },
+    accessToken: tokens.accessToken,
+  };
+
+  // Only expose refresh token to mobile apps
+  if (mobileClient) {
+    responseData.refreshToken = tokens.refreshToken;
+  }
+
+  res.status(200).json(createApiResponse(200, "Login successful", responseData));
 });
 
 // ─── Refresh Token ────────────────────────────────────────────────────────────
 export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
   const incoming = req.cookies?.refreshToken ?? req.body?.refreshToken;
+
   if (!incoming) throw new ApiError(401, "Refresh token not provided");
 
   const tokens = await refreshTokenService(incoming);
+
+  const mobileClient = isMobileClient(req);
 
   res
     .cookie("accessToken", tokens.accessToken, {
@@ -84,12 +118,18 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     .cookie("refreshToken", tokens.refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
-    .status(200)
-    .json(createApiResponse(200, "Tokens refreshed", {
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-    }));
+    });
+
+  const responseData: Record<string, unknown> = {
+    accessToken: tokens.accessToken,
+  };
+
+  // Only expose refresh token to mobile apps
+  if (mobileClient) {
+    responseData.refreshToken = tokens.refreshToken;
+  }
+
+  res.status(200).json(createApiResponse(200, "Tokens refreshed", responseData));
 });
 
 // ─── Logout ───────────────────────────────────────────────────────────────────
@@ -98,8 +138,8 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   await logoutService(req.user!._id.toString());
 
   res
-    .clearCookie("accessToken")
-    .clearCookie("refreshToken")
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
     .status(200)
     .json(createApiResponse(200, "Logged out successfully"));
 });
