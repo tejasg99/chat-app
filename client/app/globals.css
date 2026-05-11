@@ -251,7 +251,6 @@
 
 /* ─── Custom Utilities ────────────────────────────────────────────────────── */
 @layer utilities {
-
   /* Glass morphism — floating elements only */
   .glass {
     background: rgba(255, 255, 255, 0.7);
@@ -267,7 +266,8 @@
 
   /* Ambient modal shadow */
   .shadow-ambient {
-    box-shadow: 0 20px 60px rgba(20, 27, 43, 0.06),
+    box-shadow:
+      0 20px 60px rgba(20, 27, 43, 0.06),
       0 4px 20px rgba(20, 27, 43, 0.04);
   }
 
@@ -285,4 +285,19 @@
   .transition-smooth {
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
+}
+
+/* ─── Chat doodle background for chat window ────────────────────────────────────────────────────── */
+.bg-chat-doodle {
+  background-color: #f2f0f0;
+  /* The SVG uses currentColor, so we control stroke color via text-opacity */
+  color: var(--ds-primary);
+  background-image: url("/chatDoodle.svg");
+  background-repeat: repeat;
+  background-size: 240px 240px; /* Smaller size = higher density */
+}
+
+.dark .bg-chat-doodle {
+  background-color: #f2f0f0;
+  color: var(--ds-primary);
 }

@@ -111,7 +111,7 @@ export function ChatWindow({ chat }: ChatWindowProps) {
   const typingNames = Array.from(typingUsers.values());
 
   return (
-    <div className="flex flex-col h-full bg-surface overflow-hidden">
+    <div className="flex flex-col h-full bg-chat-doodle overflow-hidden">
       {/* Header */}
       <ChatHeader chat={chat} />
 
