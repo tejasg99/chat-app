@@ -29,7 +29,7 @@ export default function MainLayout({
 
   // ── Hydrate user on mount ─────────────────────────────────────────────────
   useEffect(() => {
-    if (user) return; // already hydrated
+    if (user && user._id) return; // already hydrated with valid _id
 
     async function fetchMe() {
       try {

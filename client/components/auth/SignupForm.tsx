@@ -64,8 +64,15 @@ export function SignupForm() {
       if (!data.data) throw new Error(data.message);
 
       setAccessToken(data.data.accessToken);
-      setUser(data.data.user);
-      toast.success(`Account created! Welcome, ${data.data.user.name}!`);
+      // The signup endpoint returns `id` instead of `_id` — normalise
+      // so the rest of the app (chat list filtering, etc.) works correctly.
+      const rawUser = data.data.user as IUser & { id?: string };
+      const normalizedUser: IUser = {
+        ...rawUser,
+        _id: rawUser._id ?? rawUser.id ?? "",
+      };
+      setUser(normalizedUser);
+      toast.success(`Account created! Welcome, ${normalizedUser.name}!`);
       router.push("/chats");
     } catch (err: unknown) {
       const message =

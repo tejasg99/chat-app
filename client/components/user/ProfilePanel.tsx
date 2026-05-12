@@ -38,7 +38,7 @@ export function ProfilePanel({ userId, onClose }: ProfilePanelProps) {
   const [showReport, setShowReport] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
 
-  const isBlocked = currentUser?.blockedUsers.includes(userId) ?? false;
+  const isBlocked = currentUser?.blockedUsers?.includes(userId) ?? false;
   const isSelf = currentUser?._id === userId;
 
   // ── Fetch target user profile ─────────────────────────────────────────────

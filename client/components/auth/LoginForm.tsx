@@ -45,8 +45,15 @@ export function LoginForm() {
       if (!data.data) throw new Error(data.message);
 
       setAccessToken(data.data.accessToken);
-      setUser(data.data.user);
-      toast.success(`Welcome back, ${data.data.user.name}!`);
+      // The login endpoint returns `id` instead of `_id` — normalise
+      // so the rest of the app (chat list filtering, etc.) works correctly.
+      const rawUser = data.data.user as IUser & { id?: string };
+      const normalizedUser: IUser = {
+        ...rawUser,
+        _id: rawUser._id ?? rawUser.id ?? "",
+      };
+      setUser(normalizedUser);
+      toast.success(`Welcome back, ${normalizedUser.name}!`);
       router.push("/chats");
     } catch (err: unknown) {
       const message =
