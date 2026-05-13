@@ -219,6 +219,10 @@
     font-family: "Inter", system-ui, sans-serif;
   }
 
+  button {
+    @apply cursor-pointer;
+  }
+
   h1,
   h2,
   h3,

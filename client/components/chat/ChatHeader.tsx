@@ -358,21 +358,19 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
 
       {/* ── Profile panel ── */}
       {showProfilePanel && profilePanelUserId && (
-        <Sheet open={showProfilePanel} onOpenChange={setShowProfilePanel}>
-          <SheetContent
-            side="right"
-            className="
-              w-80 p-0
-              bg-surface-container-lowest
-              border-0 shadow-ambient
-            "
-          >
+        <>
+          <div 
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+            aria-hidden="true"
+            onClick={() => setShowProfilePanel(false)}
+          />
+          <div className="fixed right-0 top-0 h-full z-50">
             <ProfilePanel
               userId={profilePanelUserId}
               onClose={() => setShowProfilePanel(false)}
             />
-          </SheetContent>
-        </Sheet>
+          </div>        
+        </>
       )}
 
       {/* ── Add members modal ── */}

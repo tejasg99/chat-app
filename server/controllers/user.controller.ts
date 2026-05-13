@@ -18,6 +18,12 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   res.status(200).json(createApiResponse(200, "Profile fetched", user));
 });
 
+export const getUserProfile = asyncHandler(async (req: Request, res: Response) => {
+  const user = await getProfileService(req.params.userId as string);
+
+  res.status(200).json(createApiResponse(200, "Profile fetched", user));
+});
+
 export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
   const parsed = updateProfileSchema.safeParse(req.body);
   if (!parsed.success) throw parsed.error;

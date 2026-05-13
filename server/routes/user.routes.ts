@@ -6,6 +6,7 @@ import {
   blockUserHandler,
   unblockUserHandler,
   searchUsers,
+  getUserProfile,
 } from "../controllers/user.controller.ts";
 import { protect } from "../middlewares/auth.middleware.ts";
 import { uploadAvatar as uploadAvatarMiddleware } from "../middlewares/upload.middleware.ts";
@@ -21,6 +22,8 @@ router.post("/me/avatar", uploadAvatarMiddleware, uploadAvatar); // Multer middl
 
 // Search must come before /:userId to avoid route shadowing
 router.get("/search", searchUsers);
+
+router.get("/:userId", getUserProfile);
 
 router.post("/block/:targetId", blockUserHandler);
 router.delete("/block/:targetId", unblockUserHandler);
