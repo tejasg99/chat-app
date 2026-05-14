@@ -223,7 +223,7 @@ export function ProfilePanel({ userId, onClose }: ProfilePanelProps) {
                       <p className="text-sm text-foreground">
                         {format(
                           new Date(profile.lastSeen),
-                          "MMM d, yyyy · HH:mm",
+                          "MMM d, yyyy · h:mm a",
                         )}
                       </p>
                     </div>

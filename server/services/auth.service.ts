@@ -8,6 +8,8 @@ import {
   createUser,
   updateUserRefreshToken,
 } from "../repositories/auth.repository.ts";
+import { setUserOnlineStatus } from "../repositories/user.repository.ts";
+import { removeOnlineUser } from "../config/redis.ts";
 import type { SignupInput, LoginInput, TokenPair, IUser } from "../types/index.ts";
 
 // ─── Signup ───────────────────────────────────────────────────────────────────
@@ -85,7 +87,13 @@ export const refreshTokenService = async (incomingRefreshToken: string): Promise
 // ─── Logout ───────────────────────────────────────────────────────────────────
 
 export const logoutService = async (userId: string): Promise<void> => {
+  // Clear the refresh token so no new access tokens can be minted
   await updateUserRefreshToken(userId, null);
+
+  // Mark the user offline in MongoDB + Redis so other users see the correct
+  // status even if the WebSocket disconnect event doesn't fire (e.g. the
+  // browser unloads before the close frame is sent).
+  await Promise.all([setUserOnlineStatus(userId, false), removeOnlineUser(userId)]);
 };
 
 // ─── Google OAuth ─────────────────────────────────────────────────────────────

@@ -10,6 +10,15 @@ import { asyncHandler } from "../utils/asyncHandler.ts";
 import { createApiResponse } from "../utils/ApiResponse.ts";
 import { ApiError } from "../utils/ApiError.ts";
 import { env } from "../config/env.ts";
+import type { ServerToClientEvents } from "../types/index.ts";
+import type { Server } from "socket.io";
+
+// The io instance is injected so the logout handler can broadcast user:offline
+let ioInstance: Server<ServerToClientEvents> | null = null;
+
+export const setAuthIoInstance = (io: Server): void => {
+  ioInstance = io as Server<ServerToClientEvents>;
+};
 
 const cookieOptions = {
   httpOnly: true,
@@ -135,7 +144,15 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 // ─── Logout ───────────────────────────────────────────────────────────────────
 export const logout = asyncHandler(async (req: Request, res: Response) => {
   // req.user is IUser | undefined — typed correctly via namespace augmentation
-  await logoutService(req.user!._id.toString());
+  const userId = req.user!._id.toString();
+  await logoutService(userId);
+
+  // Broadcast offline status to all connected clients so they see the change
+  // immediately, without waiting for the socket disconnect event (which may
+  // not fire reliably on a hard page navigation).
+  if (ioInstance) {
+    ioInstance.emit("user:offline", { userId, lastSeen: new Date() });
+  }
 
   res
     .clearCookie("accessToken", cookieOptions)

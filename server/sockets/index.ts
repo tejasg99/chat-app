@@ -9,6 +9,7 @@ import { createRedisClient } from "../config/redis.ts";
 import { registerSocketHandlers } from "./socket.handler.ts";
 import { setIoInstance } from "../controllers/reaction.controller.ts";
 import { setMessageIoInstance } from "../controllers/message.controller.ts";
+import { setAuthIoInstance } from "../controllers/auth.controller.ts";
 import type {
   ServerToClientEvents,
   ClientToServerEvents,
@@ -57,6 +58,9 @@ export const initSocket = async (
 
   // Message controller — broadcasts image messages after Cloudinary upload
   setMessageIoInstance(io);
+
+  // Auth controller — broadcasts user:offline on REST logout
+  setAuthIoInstance(io);
 
   // ─── JWT Auth Middleware ────────────────────────────────────────────────────
   io.use(async (socket, next) => {

@@ -183,7 +183,7 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
             ) : otherMember?.lastSeen ? (
               `Last seen ${format(
                 new Date(otherMember.lastSeen),
-                "MMM d, HH:mm",
+                "MMM d, h:mm a",
               )}`
             ) : (
               "Offline"
@@ -359,7 +359,7 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
       {/* ── Profile panel ── */}
       {showProfilePanel && profilePanelUserId && (
         <>
-          <div 
+          <div
             className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
             aria-hidden="true"
             onClick={() => setShowProfilePanel(false)}
@@ -369,7 +369,7 @@ export function ChatHeader({ chat }: ChatHeaderProps) {
               userId={profilePanelUserId}
               onClose={() => setShowProfilePanel(false)}
             />
-          </div>        
+          </div>
         </>
       )}
 

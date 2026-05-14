@@ -6,6 +6,7 @@ import { Plus, Users, MessageCircle, Search, Settings } from "lucide-react";
 import { toast } from "sonner";
 
 import api from "@/lib/axios";
+import { disconnectSocket } from "@/lib/socket";
 import { ApiResponse, IChat } from "@/types";
 import { useChatStore } from "@/stores/chatStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -76,6 +77,9 @@ export function ChatList() {
     } catch {
       // ignore
     } finally {
+      // Explicitly close the socket before hard-navigating away so the server
+      // receives the disconnect event and can clean up presence state.
+      disconnectSocket();
       logout();
       window.location.href = "/login";
     }
