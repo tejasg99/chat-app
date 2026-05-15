@@ -62,7 +62,7 @@ export function AddMembersModal({
       !existingMemberIds.has(u._id) &&
       u._id !== currentUser?._id &&
       !selectedUsers.some((s) => s._id === u._id) &&
-      !currentUser?.blockedUsers.includes(u._id),
+      !currentUser?.blockedUsers?.includes(u._id),
   );
 
   function toggleUser(user: IUser) {

@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+  <!-- Hardcoded Dark Theme Color: Vivid Orange (#f97316) with Full Opacity -->
+  <g fill="none" stroke="#f97316" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" stroke-opacity="0.25">
+    <!-- Row 1 & Clusters -->
+    <path d="M10 10 h15 v10 l-5 5 v-5 h-10 z" />
+    <circle cx="45" cy="15" r="6" />
+    <path d="M40 25 q5-2 10 0" />
+    <path d="M70 10 l10 10 m0-10 l-10 10" stroke-width="0.8" />
+    <rect x="95" y="12" width="14" height="10" rx="1" />
+    <circle cx="102" cy="17" r="2" />
+    <path d="M130 15 l8 8 m5-12 l-3 15" />
+    <circle cx="160" cy="20" r="1.5" />
+    <path d="M185 10 l-10 15 h15 z" transform="rotate(15 185 15)" />
+
+    <!-- Row 2 -->
+    <path d="M25 50 a8 8 0 1 0 0 16 h8 l4 4 v-4 h2 a8 8 0 0 0 0-16 z" />
+    <path d="M65 45 v15 m-4-8 h8" />
+    <circle cx="90" cy="55" r="1.2" />
+    <path d="M115 45 l10 5-10 5" />
+    <circle cx="145" cy="50" r="7" stroke-dasharray="2 2" />
+    <path d="M175 55 h12" stroke-width="2" />
+
+    <!-- Row 3 -->
+    <rect x="10" y="85" width="20" height="12" rx="2" />
+    <path d="M10 90 h20" />
+    <circle cx="50" cy="95" r="1.5"  />
+    <path d="M75 80 q10 0 10 10 t-10 10 t-10-10 t10-10" />
+    <path d="M110 90 l5-5 5 5-5 5z" />
+    <path d="M140 85 v15 m5-15 v15" />
+    <path d="M170 95 c5-5 10 0 10 5 l-10 10-10-10 c0-5 5-10 10-5" />
+
+    <!-- Row 4 -->
+    <path d="M35 125 l12-12 m0 12 l-12-12" />
+    <circle cx="15" cy="130" r="1.2"  />
+    <path d="M70 120 h15 v12 h-15 z m0 4 h15" />
+    <path d="M105 135 l10-10 10 10" />
+    <circle cx="140" cy="125" r="5" />
+    <path d="M140 120 v-3" />
+    <path d="M175 130 q-5-10 5-15 v20" />
+
+    <!-- Row 5 -->
+    <path d="M20 170 h15 m-15 5 h10 m-10 5 h15" />
+    <path d="M60 165 l8 8 8-8" />
+    <circle cx="100" cy="175" r="8" />
+    <path d="M100 175 v-4 h3" />
+    <path d="M135 160 l10 20" transform="rotate(45 140 170)" />
+    <rect x="170" y="165" width="14" height="14" rx="7" />
+    <path d="M173 169 l8 6" />
+
+    <!-- Fillers -->
+    <circle cx="110" cy="35" r="0.8"  />
+    <circle cx="10" cy="55" r="0.8"  />
+    <circle cx="190" cy="80" r="0.8"  />
+    <circle cx="50" cy="150" r="0.8"  />
+    <path d="M85 185 l3 3 m-3 0 l3-3" stroke-width="0.5" />
+    <path d="M155 100 l2 2 m-2 0 l2-2" stroke-width="0.5" />
+  </g>
+</svg>

@@ -57,7 +57,7 @@ export function NewDirectChatModal({
   // Filter out self and blocked users
   const filteredUsers = users.filter(
     (u) =>
-      u._id !== currentUser?._id && !currentUser?.blockedUsers.includes(u._id),
+      u._id !== currentUser?._id && !currentUser?.blockedUsers?.includes(u._id),
   );
 
   // ── Create or open direct chat ────────────────────────────────────────────

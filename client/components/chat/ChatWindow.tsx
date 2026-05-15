@@ -111,27 +111,28 @@ export function ChatWindow({ chat }: ChatWindowProps) {
   const typingNames = Array.from(typingUsers.values());
 
   return (
-    <div className="flex flex-col h-full bg-chat-doodle overflow-hidden">
+    <div className="flex flex-col h-full">
       {/* Header */}
       <ChatHeader chat={chat} />
+      <div className="flex flex-col bg-chat-doodle overflow-hidden h-full">
+        {/* Messages */}
+        <MessageList
+          chatId={chat._id}
+          chatName={chatName}
+          onReply={setReplyTo}
+          onReact={handleReact}
+        />
 
-      {/* Messages */}
-      <MessageList
-        chatId={chat._id}
-        chatName={chatName}
-        onReply={setReplyTo}
-        onReact={handleReact}
-      />
+        {/* Typing indicator */}
+        <TypingIndicator names={typingNames} />
 
-      {/* Typing indicator */}
-      <TypingIndicator names={typingNames} />
-
-      {/* Input */}
-      <MessageInput
-        chatId={chat._id}
-        replyTo={replyTo}
-        onClearReply={() => setReplyTo(null)}
-      />
+        {/* Input */}
+        <MessageInput
+          chatId={chat._id}
+          replyTo={replyTo}
+          onClearReply={() => setReplyTo(null)}
+        />        
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Users, MessageCircle, Search, Settings } from "lucide-react";
+import { Plus, Users, MessageCircle, Search, Settings, Moon, Sun } from "lucide-react";
 import { toast } from "sonner";
 
 import api from "@/lib/axios";
@@ -10,6 +10,7 @@ import { disconnectSocket } from "@/lib/socket";
 import { ApiResponse, IChat } from "@/types";
 import { useChatStore } from "@/stores/chatStore";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { ChatListItem } from "./ChatListItem";
 import { UserAvatar } from "@/components/user/UserAvatar";
 import { NewDirectChatModal } from "@/components/modals/NewDirectChatModal";
@@ -30,6 +31,7 @@ import {
 export function ChatList() {
   const { user, logout } = useAuth();
   const { chats, setChats } = useChatStore();
+  const { isDark, toggleTheme } = useTheme();
   const [search, setSearch] = useState("");
   const [showDirectModal, setShowDirectModal] = useState(false);
   const [showGroupModal, setShowGroupModal] = useState(false);
@@ -267,6 +269,20 @@ export function ChatList() {
               >
                 <Settings className="w-4 h-4 text-muted-foreground" />
                 Edit profile
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={toggleTheme}
+                className="
+                  gap-2.5 px-3 py-2.5 rounded-lg text-sm text-foreground
+                  hover:bg-surface-container-low cursor-pointer
+                "
+              >
+                {isDark ? (
+                  <Sun className="w-4 h-4 text-muted-foreground" />
+                ) : (
+                  <Moon className="w-4 h-4 text-muted-foreground" />
+                )}
+                {isDark ? "Light mode" : "Dark mode"}
               </DropdownMenuItem>
               <DropdownMenuSeparator className="bg-surface-container-high mx-2" />
               <DropdownMenuItem

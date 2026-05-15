@@ -60,7 +60,7 @@ export function NewGroupChatModal({
     (u) =>
       u._id !== currentUser?._id &&
       !selectedUsers.some((s) => s._id === u._id) &&
-      !currentUser?.blockedUsers.includes(u._id),
+      !currentUser?.blockedUsers?.includes(u._id),
   );
 
   function toggleUser(user: IUser) {

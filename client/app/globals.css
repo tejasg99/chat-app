@@ -293,15 +293,13 @@
 
 /* ─── Chat doodle background for chat window ────────────────────────────────────────────────────── */
 .bg-chat-doodle {
-  background-color: #f2f0f0;
-  /* The SVG uses currentColor, so we control stroke color via text-opacity */
-  color: var(--ds-primary);
-  background-image: url("/chatDoodle.svg");
+  background-color: #ededed;
+  background-image: url("/doodle-light.svg");
   background-repeat: repeat;
-  background-size: 240px 240px; /* Smaller size = higher density */
+  background-size: 180px 180px;
 }
 
 .dark .bg-chat-doodle {
-  background-color: #f2f0f0;
-  color: var(--ds-primary);
+  background-color: #111827;
+  background-image: url("/doodle-dark.svg");
 }
