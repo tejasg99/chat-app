@@ -16,7 +16,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "ChatApp — Real-Time Messaging",
+  title: "Chat2vent — Real-Time Messaging",
   description:
     "A modern, real-time chat application with group chats, reactions, and more.",
 };

@@ -187,7 +187,7 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
 
   if (platform === "mobile") {
     // Redirect to the native app deep link with tokens as query params
-    const deepLink = `chatapp://auth/success?accessToken=${encodeURIComponent(result.tokens.accessToken)}&refreshToken=${encodeURIComponent(result.tokens.refreshToken)}`;
+    const deepLink = `chat2vent://auth/success?accessToken=${encodeURIComponent(result.tokens.accessToken)}&refreshToken=${encodeURIComponent(result.tokens.refreshToken)}`;
     return res.redirect(deepLink);
   }
 

@@ -1,4 +1,4 @@
-# ChatApp — React Native (Expo) Android App Implementation Plan
+# Chat2vent — React Native (Expo) Android App Implementation Plan
 
 Backend: `http://<LAN_IP>:5000/api` · Socket: `http://<LAN_IP>:5000`
 
@@ -44,7 +44,7 @@ The backend **already has Bearer token fallbacks** in place:
 - **Login/Signup responses** already return `accessToken` in the JSON body. ✅
 
 #### Return `refreshToken` in the JSON Response Body
-Added refreshToken to JSON response body in signup, login, and refreshToken handlers. Updated googleCallback to detect ?state=mobile and redirect to chatapp:// deep link with tokens.
+Added refreshToken to JSON response body in signup, login, and refreshToken handlers. Updated googleCallback to detect ?state=mobile and redirect to chat2vent:// deep link with tokens.
 
 #### How the Google OAuth Deep Link Flow Works Now
 1. Native app opens http://<LAN_IP>:5000/api/auth/google?platform=mobile in an in-app browser.

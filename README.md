@@ -1,4 +1,4 @@
-# Real-Time Chat App
+# Chat2vent - Real-Time Chat App
 
 A production-ready real-time chat application built with an emphasis on design and premium user experience. This full-stack project features a responsive frontend and a robust, scalable backend.
 
@@ -19,7 +19,7 @@ A production-ready real-time chat application built with an emphasis on design a
 ---
 
 ## Overview
-`ChatApp` is a comprehensive real-time communication platform designed to offer seamless direct and group messaging experiences. It integrates secure authentication, real-time message syncing, optimistic UI updates, and a sophisticated design system to provide a premium user experience.
+`Chat2vent` is a comprehensive real-time communication platform designed to offer seamless direct and group messaging experiences. It integrates secure authentication, real-time message syncing, optimistic UI updates, and a sophisticated design system to provide a premium user experience.
 
 ---
 
@@ -78,7 +78,7 @@ A production-ready real-time chat application built with an emphasis on design a
 ## Directory Structure
 
 ```text
-ChatApp/
+Chat2vent/
 ├── client/                       # Frontend Next.js Application
 │   ├── app/                      # App router (auth, main, globals.css)
 │   ├── components/               # UI components (auth, chat, modals, skeletons)

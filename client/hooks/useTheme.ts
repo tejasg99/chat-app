@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
-const STORAGE_KEY = "chatapp-theme";
+const STORAGE_KEY = "Chat2vent-theme";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";

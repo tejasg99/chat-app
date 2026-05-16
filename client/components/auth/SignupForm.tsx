@@ -94,7 +94,7 @@ export function SignupForm() {
           <MessageCircle className="w-5 h-5 text-on-primary" />
         </div>
         <span className="font-heading text-xl font-bold text-foreground">
-          ChatApp
+          Chat2vent
         </span>
       </div>
 

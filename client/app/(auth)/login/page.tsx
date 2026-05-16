@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { LoginForm } from "@/components/auth/LoginForm";
 
 export const metadata: Metadata = {
-  title: "Sign In — ChatApp",
-  description: "Sign in to your ChatApp account.",
+  title: "Sign In — Chat2vent",
+  description: "Sign in to your Chat2vent account.",
 };
 
 export default function LoginPage() {

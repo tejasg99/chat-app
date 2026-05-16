@@ -140,7 +140,7 @@ export function ChatList() {
               <MessageCircle className="w-3.5 h-3.5 text-on-primary" />
             </div>
             <span className="font-heading text-base font-bold text-foreground">
-              ChatApp
+              Chat2vent
             </span>
           </div>
 

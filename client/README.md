@@ -1,6 +1,6 @@
 # Real-Time Chat App — Frontend
 
-The client-side of ChatApp, a real-time messaging application. Built with Next.js 16 App Router, TypeScript, and Socket.io — designed around an "Architectural Whisper" philosophy: premium, editorial, and spatially intentional.
+The client-side of Chat2vent, a real-time messaging application. Built with Next.js 16 App Router, TypeScript, and Socket.io — designed around an "Architectural Whisper" philosophy: premium, editorial, and spatially intentional.
 
 ## 🚀 Tech Stack
 
