@@ -49,7 +49,7 @@ passport.use(
         });
 
         // Pass tokens along for the callback to use
-        return done(null, { user, tokens });
+        return done(null, user, { tokens });
       } catch (error) {
         return done(error as Error, false);
       }

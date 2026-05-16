@@ -163,21 +163,21 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
 // ─── Google Callback ──────────────────────────────────────────────────────────
 export const googleCallback = asyncHandler(async (req: Request, res: Response) => {
-  // Passport attaches the done() payload to req.user
-  const result = req.user as unknown as {
-    user: { _id: string };
-    tokens: { accessToken: string; refreshToken: string };
-  };
+  const user = req.user as unknown as { _id: string } | undefined;
+  const info = req.authInfo as unknown as
+    | { tokens?: { accessToken: string; refreshToken: string } }
+    | undefined;
+  const tokens = info?.tokens;
 
-  if (!result?.tokens) throw new ApiError(401, "Google authentication failed");
+  if (!tokens) throw new ApiError(401, "Google authentication failed");
 
   // Set cookies (for web client)
   res
-    .cookie("accessToken", result.tokens.accessToken, {
+    .cookie("accessToken", tokens.accessToken, {
       ...cookieOptions,
       maxAge: 15 * 60 * 1000,
     })
-    .cookie("refreshToken", result.tokens.refreshToken, {
+    .cookie("refreshToken", tokens.refreshToken, {
       ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -187,7 +187,7 @@ export const googleCallback = asyncHandler(async (req: Request, res: Response) =
 
   if (platform === "mobile") {
     // Redirect to the native app deep link with tokens as query params
-    const deepLink = `chat2vent://auth/success?accessToken=${encodeURIComponent(result.tokens.accessToken)}&refreshToken=${encodeURIComponent(result.tokens.refreshToken)}`;
+    const deepLink = `chat2vent://auth/success?accessToken=${encodeURIComponent(tokens.accessToken)}&refreshToken=${encodeURIComponent(tokens.refreshToken)}`;
     return res.redirect(deepLink);
   }
 
